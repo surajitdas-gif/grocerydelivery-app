@@ -98,7 +98,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.switchRow}>
-              <Text style={styles.switchText}>Don't have an account? </Text>
+              <Text style={styles.switchText}>{"Don't have an account?"} </Text>
               <TouchableOpacity onPress={() => router.push('/auth/signup' as any)}>
                 <Text style={styles.switchLink}>Sign up</Text>
               </TouchableOpacity>
