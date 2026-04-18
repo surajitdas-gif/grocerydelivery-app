@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   StyleSheet,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -14,9 +15,13 @@ export default function Signup() {
   const [password, setPassword] = useState('');
 
   const handleSignup = async () => {
+    if (!name || !email || !password) {
+      Alert.alert('Error', 'All fields required');
+      return;
+    }
+
     try {
-    //  const response = await fetch('http://172.20.10.4:5000/api/signup', {
-    const response = await fetch('http://127.0.0.1:5000/api/signup', {
+      const response = await fetch('http://172.20.10.4:5000/api/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,17 +36,16 @@ export default function Signup() {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Signup successful');
+        Alert.alert('Success', data.message);
 
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, 500);
+        router.push('/auth/login');
       } else {
-        alert(data.message);
+        Alert.alert('Error', data.message);
       }
 
     } catch (error) {
-      alert(String(error));
+      console.log(error);
+      Alert.alert('Error', String(error));
     }
   };
 
@@ -71,33 +75,13 @@ export default function Signup() {
         onChangeText={setPassword}
       />
 
-      <button
-        onClick={handleSignup}
-        style={{
-          padding: '15px',
-          backgroundColor: '#16a34a',
-          color: 'white',
-          border: 'none',
-          borderRadius: '10px',
-          fontSize: '16px',
-          marginTop: '20px',
-        }}
-      >
-        Create Account
-      </button>
+      <TouchableOpacity style={styles.button} onPress={handleSignup}>
+        <Text style={styles.buttonText}>Create Account</Text>
+      </TouchableOpacity>
 
-      <button
-        onClick={() => router.push('/auth/login')}
-        style={{
-          marginTop: '20px',
-          background: 'none',
-          border: 'none',
-          color: '#16a34a',
-          fontSize: '16px',
-        }}
-      >
-        Already have account? Login
-      </button>
+      <TouchableOpacity onPress={() => router.push('/auth/login')}>
+        <Text style={styles.loginText}>Already have account? Login</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -123,5 +107,26 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
+  },
+
+  button: {
+    backgroundColor: '#16a34a',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  loginText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#16a34a',
+    fontSize: 16,
   },
 });

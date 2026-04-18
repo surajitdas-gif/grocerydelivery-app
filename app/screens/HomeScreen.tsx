@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 import ProductCard from '../components/ProductCard';
 
 const { width } = Dimensions.get('window');
@@ -94,6 +96,11 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('token');
+    router.replace('/auth/login');
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -102,9 +109,15 @@ export default function HomeScreen() {
           <Text style={styles.location}>📍 Rampur Village, Sitapur</Text>
         </View>
 
-        <TouchableOpacity style={styles.cartBtn}>
-          <Text>🛒</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.cartBtn}>
+            <Text>🛒</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text>🚪</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.searchWrapper}>
@@ -162,6 +175,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
   deliverLabel: {
     fontSize: 11,
     color: '#9ca3af',
@@ -178,6 +196,15 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  logoutBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#fef2f2',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -251,7 +278,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
 
-    bestSellerGrid: {
+  bestSellerGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
