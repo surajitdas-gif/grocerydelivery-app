@@ -20,29 +20,35 @@ export default function LoginScreen() {
   const [showPass, setShowPass] = useState(false);
 
   const handleLogin = async () => {
-    try {
-      const response = await fetch('http://172.20.10.4:5000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+  if (!email || !password) {
+    Alert.alert('Error', 'Please fill all fields');
+    return;
+  }
 
-      const data = await response.json();
+  try {
+    const response = await fetch('http://172.20.10.4:5000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (response.ok) {
-        await AsyncStorage.setItem('token', data.token);
+    const data = await response.json();
 
-        Alert.alert('Success', 'Login successful');
+    if (response.ok) {
+      await AsyncStorage.setItem('token', data.token);
 
-        router.replace('/(tabs)');
-      } else {
-        Alert.alert('Error', data.message);
-      }
+      console.log('Saved token:', data.token);
 
-    } catch (error) {
-      Alert.alert('Error', String(error));
+      setTimeout(() => {
+        router.replace('/(tabs)/home' as any);
+      }, 500);
+    } else {
+      Alert.alert('Error', data.message);
     }
-  };
+  } catch (error) {
+    Alert.alert('Error', String(error));
+  }
+};
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -55,6 +61,7 @@ export default function LoginScreen() {
             <View style={styles.logoBox}>
               <Text style={styles.logoIcon}>🛒</Text>
             </View>
+
             <Text style={styles.brandName}>FreshCart</Text>
             <Text style={styles.brandTagline}>Groceries in 10 minutes</Text>
           </View>
@@ -90,10 +97,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.btnPrimary}
-              onPress={handleLogin}
-            >
+            <TouchableOpacity style={styles.btnPrimary} onPress={handleLogin}>
               <Text style={styles.btnPrimaryText}>Sign in</Text>
             </TouchableOpacity>
 
@@ -111,7 +115,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#1a4731' },
+  safe: {
+    flex: 1,
+    backgroundColor: '#1a4731',
+  },
 
   header: {
     alignItems: 'center',
@@ -129,7 +136,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  logoIcon: { fontSize: 28 },
+  logoIcon: {
+    fontSize: 28,
+  },
 
   brandName: {
     fontSize: 26,

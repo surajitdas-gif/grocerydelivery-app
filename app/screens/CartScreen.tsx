@@ -60,6 +60,7 @@ export default function CartScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      
       <Text style={styles.header}>My Cart 🛒</Text>
       <Text style={styles.delivery}>Delivery in 10 mins 🚀</Text>
 
@@ -84,19 +85,19 @@ export default function CartScreen() {
                   <Text>-</Text>
                 </TouchableOpacity>
 
-                <Text>{item.quantity}</Text>
+                <Text style={styles.qtyText}>{item.quantity}</Text>
 
                 <TouchableOpacity
-                  style={styles.qtyBtn}
+                  style={styles.qtyBtnGreen}
                   onPress={() => increaseQty(item.id)}
                 >
-                  <Text>+</Text>
+                  <Text style={styles.white}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             <TouchableOpacity onPress={() => removeItem(item.id)}>
-              <Text style={styles.remove}>Remove</Text>
+              <Text style={styles.remove}>✕</Text>
             </TouchableOpacity>
           </View>
         ))
@@ -112,7 +113,7 @@ export default function CartScreen() {
 
         <View style={styles.billRow}>
           <Text>Delivery Fee</Text>
-          <Text>₹30</Text>
+          <Text style={{ color: '#16a34a' }}>₹30</Text>
         </View>
 
         <View style={styles.billRow}>
@@ -125,13 +126,10 @@ export default function CartScreen() {
           <Text style={styles.total}>₹{total}</Text>
         </View>
 
-        <TextInput
-          placeholder="Apply coupon"
-          style={styles.input}
-        />
+        <TextInput placeholder="Apply coupon" style={styles.input} />
 
         <TouchableOpacity style={styles.checkout}>
-          <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+          <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -148,11 +146,11 @@ const styles = StyleSheet.create({
 
   header: {
     fontSize: 26,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 
   delivery: {
-    color: '#666',
+    color: '#6b7280',
     marginBottom: 18,
   },
 
@@ -160,7 +158,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 14,
     elevation: 3,
     alignItems: 'center',
@@ -178,12 +176,12 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
 
   price: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginVertical: 6,
   },
 
@@ -194,38 +192,58 @@ const styles = StyleSheet.create({
   },
 
   qtyBtn: {
+    width: 28,
+    height: 28,
     backgroundColor: '#f3f4f6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  qtyBtnGreen: {
+    width: 28,
+    height: 28,
+    backgroundColor: '#16a34a',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  white: {
+    color: '#fff',
+  },
+
+  qtyText: {
+    fontWeight: '700',
   },
 
   remove: {
     color: 'red',
-    fontSize: 13,
+    fontSize: 18,
   },
 
   billBox: {
     backgroundColor: '#f9fafb',
     padding: 16,
-    borderRadius: 14,
+    borderRadius: 16,
     marginTop: 20,
+    marginBottom: 30,
   },
 
   billTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 12,
   },
 
   billRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
 
   total: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 16,
   },
 
@@ -246,7 +264,7 @@ const styles = StyleSheet.create({
   checkoutText: {
     color: '#fff',
     textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
 
   emptyCart: {

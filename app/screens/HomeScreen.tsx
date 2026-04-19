@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -66,18 +67,6 @@ const products = [
     image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655',
   },
   {
-    name: 'Onions',
-    price: 22,
-    quantity: '1 kg',
-    image: 'https://images.unsplash.com/photo-1508747703725-719777637510',
-  },
-  {
-    name: 'Carrots',
-    price: 30,
-    quantity: '500 g',
-    image: 'https://images.unsplash.com/photo-1447175008436-054170c2e979',
-  },
-  {
     name: 'Banana',
     price: 40,
     quantity: '1 dozen',
@@ -103,6 +92,8 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.deliverLabel}>Delivering to</Text>
@@ -120,22 +111,47 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Search */}
       <View style={styles.searchWrapper}>
+        <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
           placeholder="Search vegetables, fruits, milk..."
           style={styles.searchInput}
         />
       </View>
 
+      {/* Banner */}
       <View style={[styles.bannerSlide, { backgroundColor: banners[activeIndex].bg }]}>
         <View>
           <Text style={styles.bannerSubtitle}>{banners[activeIndex].subtitle}</Text>
           <Text style={styles.bannerTitle}>{banners[activeIndex].title}</Text>
+          <Text style={styles.shopNow}>Shop now →</Text>
         </View>
         <Text style={styles.bannerEmoji}>{banners[activeIndex].emoji}</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Shop by Category</Text>
+      {/* Banner Dots */}
+      <View style={styles.dots}>
+        {banners.map((_, i) => (
+          <View
+            key={i}
+            style={[styles.dot, activeIndex === i && styles.activeDot]}
+          />
+        ))}
+      </View>
+
+      {/* Delivery Card */}
+      <View style={styles.deliveryCard}>
+        <Text style={styles.deliverySmall}>Your order is on its way</Text>
+        <Text style={styles.deliveryBig}>12 min away</Text>
+        <Text style={styles.deliverySub}>Rider: Ravi K.</Text>
+      </View>
+
+      {/* Categories */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Shop by Category</Text>
+        <Text style={styles.seeAll}>See all</Text>
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {categories.map((cat, i) => (
@@ -148,7 +164,11 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      <Text style={styles.sectionTitle}>Best Sellers</Text>
+      {/* Products */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Best Sellers</Text>
+        <Text style={styles.seeAll}>See all</Text>
+      </View>
 
       <View style={styles.bestSellerGrid}>
         {products.map((item, i) => (
@@ -157,6 +177,7 @@ export default function HomeScreen() {
           </View>
         ))}
       </View>
+
     </ScrollView>
   );
 }
@@ -165,8 +186,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    padding: 20,
-    marginTop: 48,
+    padding: 16,
+    marginTop: 40,
   },
 
   header: {
@@ -187,29 +208,30 @@ const styles = StyleSheet.create({
 
   location: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#111',
+    fontWeight: '700',
   },
 
   cartBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
 
   logoutBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#fef2f2',
-    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#fee2e2',
     justifyContent: 'center',
+    alignItems: 'center',
   },
 
   searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f3f4f6',
     borderRadius: 14,
     paddingHorizontal: 14,
@@ -217,16 +239,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  searchIcon: {
+    marginRight: 8,
+  },
+
   searchInput: {
+    flex: 1,
     height: 45,
   },
 
   bannerSlide: {
-    width: width - 40,
-    height: 140,
+    width: width - 32,
+    height: 150,
     borderRadius: 18,
     padding: 20,
-    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -244,15 +270,72 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  shopNow: {
+    color: '#fff',
+    marginTop: 10,
+    fontWeight: '600',
+  },
+
   bannerEmoji: {
     fontSize: 48,
+  },
+
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#d1d5db',
+    marginHorizontal: 4,
+  },
+
+  activeDot: {
+    width: 18,
+    backgroundColor: '#111',
+  },
+
+  deliveryCard: {
+    backgroundColor: '#f0fdf4',
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+  },
+
+  deliverySmall: {
+    color: '#16a34a',
+    fontSize: 12,
+  },
+
+  deliveryBig: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+
+  deliverySub: {
+    color: '#6b7280',
+    marginTop: 4,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    marginBottom: 12,
   },
 
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 14,
-    marginTop: 16,
+  },
+
+  seeAll: {
+    color: '#1a7a4c',
+    fontWeight: '600',
   },
 
   categoryCard: {
@@ -282,12 +365,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 12,
   },
 
   bestSellerItem: {
-    width: '30%',
+    width: '48%',
     marginBottom: 14,
-    alignItems: 'center',
   },
 });
