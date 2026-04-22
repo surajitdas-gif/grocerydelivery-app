@@ -1,130 +1,4 @@
-
-// import React from 'react';
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   StyleSheet,
-//   Image,
-// } from 'react-native';
-// import { useCart } from '../context/CartContext';
-
-// export default function OrdersScreen() {
-//   const { orders } = useCart();
-
-//   return (
-//     <ScrollView style={styles.container}>
-//       <Text style={styles.header}>My Orders 📦</Text>
-
-//       {orders.length === 0 ? (
-//         <Text style={styles.empty}>
-//           No orders yet
-//         </Text>
-//       ) : (
-//         orders.map((item, index) => (
-//           <View key={index} style={styles.card}>
-//             <Image
-//               source={{ uri: item.image }}
-//               style={styles.image}
-//             />
-
-//             <View style={styles.info}>
-//               <Text style={styles.name}>
-//                 {item.name}
-//               </Text>
-
-//               <Text style={styles.qty}>
-//                 Qty: {item.qty || 1}
-//               </Text>
-
-//               <Text style={styles.price}>
-//                 ₹{item.price * (item.qty || 1)}
-//               </Text>
-
-//               <Text style={styles.status}>
-//                 Status: Preparing 🍳
-//               </Text>
-
-//               <Text style={styles.eta}>
-//                 Delivery in 15 mins 🚀
-//               </Text>
-//             </View>
-//           </View>
-//         ))
-//       )}
-//     </ScrollView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#fff',
-//     padding: 16,
-//     marginTop: 35,
-//   },
-
-//   header: {
-//     fontSize: 26,
-//     fontWeight: '700',
-//     marginBottom: 20,
-//   },
-
-//   empty: {
-//     textAlign: 'center',
-//     marginTop: 100,
-//     color: '#666',
-//     fontSize: 18,
-//   },
-
-//   card: {
-//     flexDirection: 'row',
-//     backgroundColor: '#fff',
-//     padding: 12,
-//     borderRadius: 16,
-//     marginBottom: 14,
-//     elevation: 3,
-//     alignItems: 'center',
-//   },
-
-//   image: {
-//     width: 70,
-//     height: 70,
-//     borderRadius: 12,
-//   },
-
-//   info: {
-//     marginLeft: 12,
-//   },
-
-//   name: {
-//     fontWeight: '700',
-//     fontSize: 15,
-//   },
-
-//   qty: {
-//     color: '#666',
-//     marginTop: 4,
-//   },
-
-//   price: {
-//     marginTop: 4,
-//     fontWeight: '700',
-//   },
-
-//   status: {
-//     color: '#16a34a',
-//     marginTop: 4,
-//     fontWeight: '600',
-//   },
-
-//   eta: {
-//     color: '#6b7280',
-//     marginTop: 4,
-//     fontSize: 12,
-//   },
-// });
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -132,48 +6,98 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
 import { useCart } from '../context/CartContext';
 
 export default function OrdersScreen() {
+  const [backendOrders, setBackendOrders] = useState<any[]>([]);
   const { orders } = useCart();
+
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [])
+  );
+
+  const loadOrders = async () => {
+    try {
+      const user = JSON.parse(
+        (await AsyncStorage.getItem('user')) || '{}'
+      );
+
+      const res = await fetch(
+        `http://172.20.10.4:5000/api/orders/my-orders/${user._id}`
+      );
+
+      const data: any = await res.json();
+
+      console.log('Orders loaded:', data);
+
+      if (Array.isArray(data)) {
+        setBackendOrders(data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const finalOrders =
+    backendOrders.length > 0 ? backendOrders : orders;
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>My Orders 📦</Text>
 
-      {orders.length === 0 ? (
+      {finalOrders.length === 0 ? (
         <Text style={styles.empty}>No orders yet</Text>
       ) : (
-        orders.map((order, index) => (
+        finalOrders.map((order: any, index: number) => (
           <View key={index} style={styles.orderBox}>
-            <Text style={styles.id}>{order.id}</Text>
-            <Text style={styles.date}>{order.date}</Text>
+            <Text style={styles.id}>
+              {order._id || order.id}
+            </Text>
+
+            <Text style={styles.date}>
+              {order.createdAt
+                ? new Date(order.createdAt).toLocaleDateString()
+                : order.date}
+            </Text>
+
             <Text style={styles.status}>
               Status: {order.status} 🚚
             </Text>
 
-            {order.items.map((item, i) => (
-              <View key={i} style={styles.card}>
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.image}
-                />
+            <Text style={styles.extra}>
+              Address: {order.address || 'No address'}
+            </Text>
 
-                <View style={styles.info}>
-                  <Text style={styles.name}>
-                    {item.name}
-                  </Text>
+            {order.items && order.items.length > 0 ? (
+              order.items.map((item: any, i: number) => (
+                <View key={i} style={styles.card}>
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.image}
+                  />
 
-                  <Text>
-                    Qty: {item.qty || 1}
-                  </Text>
+                  <View style={styles.info}>
+                    <Text style={styles.name}>
+                      {item.name}
+                    </Text>
 
-                  <Text>
-                    ₹{item.price * (item.qty || 1)}
-                  </Text>
+                    <Text>
+                      Qty: {item.qty || 1}
+                    </Text>
+
+                    <Text>
+                      ₹{item.price * (item.qty || 1)}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))
+            ) : (
+              <Text style={styles.extra}>No items found</Text>
+            )}
           </View>
         ))
       )}
@@ -221,7 +145,12 @@ const styles = StyleSheet.create({
   status: {
     color: '#16a34a',
     marginTop: 6,
-    marginBottom: 12,
+    marginBottom: 8,
+  },
+
+  extra: {
+    color: '#555',
+    marginBottom: 10,
   },
 
   card: {

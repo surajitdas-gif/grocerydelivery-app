@@ -4,7 +4,6 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-
 router.post('/signup', async (req, res) => {
   try {
     console.log(req.body);
@@ -71,6 +70,29 @@ router.post('/login', async (req, res) => {
       token,
       user,
     });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+router.put('/update-profile/:id', async (req, res) => {
+  try {
+    const { name, phone, address } = req.body;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        phone,
+        address,
+      },
+      { new: true }
+    );
+
+    res.json(updatedUser);
 
   } catch (error) {
     res.status(500).json({

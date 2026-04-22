@@ -7,11 +7,17 @@
 //   StyleSheet,
 //   ScrollView,
 //   TextInput,
+//   Alert,
 // } from 'react-native';
+// import { router } from 'expo-router';
 // import { useCart } from '../context/CartContext';
 
 // export default function CartScreen() {
-//   const { cart, increaseQty, decreaseQty } = useCart();
+//   const {
+//     cart,
+//     increaseQty,
+//     decreaseQty,
+//   } = useCart();
 
 //   const subtotal = cart.reduce(
 //     (sum, item) => sum + item.price * (item.qty || 1),
@@ -19,6 +25,20 @@
 //   );
 
 //   const total = subtotal + 35;
+
+//   const handleCheckout = () => {
+//     if (cart.length === 0) {
+//       Alert.alert('Cart is empty');
+//       return;
+//     }
+
+//     router.push({
+//       pathname: '/screens/PaymentScreen',
+//       params: {
+//         total: String(total),
+//       },
+//     } as any);
+//   };
 
 //   return (
 //     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -88,8 +108,11 @@
 
 //         <TextInput placeholder="Apply coupon" style={styles.input} />
 
-//         <TouchableOpacity style={styles.checkout}>
-//           <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
+//         <TouchableOpacity
+//           style={styles.checkout}
+//           onPress={handleCheckout}
+//         >
+//           <Text style={styles.checkoutText}>Proceed to Pay →</Text>
 //         </TouchableOpacity>
 //       </View>
 //     </ScrollView>
@@ -221,7 +244,6 @@
 //     color: '#666',
 //   },
 // });
-
 import React from 'react';
 import {
   View,
@@ -233,6 +255,7 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
+import { router } from 'expo-router';
 import { useCart } from '../context/CartContext';
 
 export default function CartScreen() {
@@ -240,7 +263,6 @@ export default function CartScreen() {
     cart,
     increaseQty,
     decreaseQty,
-    checkout,
   } = useCart();
 
   const subtotal = cart.reduce(
@@ -251,12 +273,12 @@ export default function CartScreen() {
   const total = subtotal + 35;
 
   const handleCheckout = () => {
-    checkout();
+    if (cart.length === 0) {
+      Alert.alert('Cart is empty');
+      return;
+    }
 
-    Alert.alert(
-      'Order Placed ✅',
-      'Your order moved to Orders tab'
-    );
+    router.push('/payment');
   };
 
   return (
@@ -331,7 +353,7 @@ export default function CartScreen() {
           style={styles.checkout}
           onPress={handleCheckout}
         >
-          <Text style={styles.checkoutText}>Proceed to Checkout →</Text>
+          <Text style={styles.checkoutText}>Proceed to Pay →</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
