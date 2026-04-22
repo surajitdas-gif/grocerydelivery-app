@@ -199,6 +199,15 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity
+        style={styles.adminBtn}
+        onPress={() => router.push('/admin/dashboard' as any)}
+      >
+        <Text style={styles.adminText}>
+          Open Admin Dashboard ⚙️
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={styles.logout}
         onPress={handleLogout}
       >
@@ -319,6 +328,20 @@ const styles = StyleSheet.create({
   },
 
   updateText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '700',
+  },
+
+  adminBtn: {
+    backgroundColor: '#2563eb',
+    marginHorizontal: 16,
+    marginTop: 20,
+    padding: 16,
+    borderRadius: 14,
+  },
+
+  adminText: {
     color: '#fff',
     textAlign: 'center',
     fontWeight: '700',

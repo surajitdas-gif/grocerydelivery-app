@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import ProductCard from '../components/ProductCard';
 
 const { width } = Dimensions.get('window');
@@ -38,32 +38,20 @@ const banners = [
   },
 ];
 
-const categories = [
-  { name: 'Vegetables', emoji: '🥦', bg: '#E8F5E9' },
-  { name: 'Fruits', emoji: '🍎', bg: '#FFF3E0' },
-  { name: 'Milk', emoji: '🥛', bg: '#E3F2FD' },
-  { name: 'Eggs', emoji: '🥚', bg: '#FCE4EC' },
-  { name: 'Grains', emoji: '🌾', bg: '#F3E5F5' },
-];
-
-const products = [
-  {
-    name: 'Fresh Tomatoes',
-    price: 25,
-    quantity: '500 g',
-    image: 'https://images.unsplash.com/photo-1561136594-7f68413baa99',
-  },
-  {
-    name: 'Fresh Milk',
-    price: 28,
-    quantity: '500 ml',
-    image: 'https://images.unsplash.com/photo-1580910051074-3eb694886505',
-  },
+const categoryList = [
+  'All',
+  'Vegetables',
+  'Fruits',
+  'Milk',
+  'Beauty',
 ];
 
 export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [latestOrder, setLatestOrder] = useState<any>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] =
+    useState('All');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -76,6 +64,7 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       loadLatestOrder();
+      loadProducts();
     }, [])
   );
 
@@ -99,99 +88,108 @@ export default function HomeScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('token');
-    router.replace('/auth/login');
+  const loadProducts = async () => {
+    try {
+      const res = await fetch(
+        'http://172.20.10.4:5000/api/products/all-products'
+      );
+
+      const data = await res.json();
+
+      console.log('Products:', data);
+
+      if (Array.isArray(data)) {
+        setProducts(data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
+  const filteredProducts =
+    selectedCategory === 'All'
+      ? products
+      : products.filter(
+          item =>
+            item.category?.toLowerCase() ===
+            selectedCategory.toLowerCase()
+        );
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.deliverLabel}>Delivering to</Text>
-          <Text style={styles.location}>📍 Rampur Village, Sitapur</Text>
-        </View>
-
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.cartBtn}>
-            <Text>🛒</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text>🚪</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <ScrollView style={styles.container}>
+      <Text style={styles.location}>📍 Village Delivery</Text>
 
       <View style={styles.searchWrapper}>
-        <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
-          placeholder="Search vegetables, fruits, milk..."
+          placeholder="Search products..."
           style={styles.searchInput}
         />
       </View>
 
-      <View style={[styles.bannerSlide, { backgroundColor: banners[activeIndex].bg }]}>
+      <View
+        style={[
+          styles.banner,
+          { backgroundColor: banners[activeIndex].bg },
+        ]}
+      >
         <View>
-          <Text style={styles.bannerSubtitle}>{banners[activeIndex].subtitle}</Text>
-          <Text style={styles.bannerTitle}>{banners[activeIndex].title}</Text>
-          <Text style={styles.shopNow}>Shop now →</Text>
+          <Text style={styles.bannerSubtitle}>
+            {banners[activeIndex].subtitle}
+          </Text>
+          <Text style={styles.bannerTitle}>
+            {banners[activeIndex].title}
+          </Text>
         </View>
-        <Text style={styles.bannerEmoji}>{banners[activeIndex].emoji}</Text>
-      </View>
 
-      <View style={styles.dots}>
-        {banners.map((_, i) => (
-          <View
-            key={i}
-            style={[styles.dot, activeIndex === i && styles.activeDot]}
-          />
-        ))}
+        <Text style={styles.bannerEmoji}>
+          {banners[activeIndex].emoji}
+        </Text>
       </View>
 
       {latestOrder && (
-        <View style={styles.deliveryCard}>
-          <Text style={styles.deliverySmall}>
+        <View style={styles.orderCard}>
+          <Text style={styles.orderText}>
             Your order is {latestOrder.status}
           </Text>
-          <Text style={styles.deliveryBig}>
-            ₹{latestOrder.total}
-          </Text>
-          <Text style={styles.deliverySub}>
-            Address: {latestOrder.address}
-          </Text>
+          <Text>₹{latestOrder.total}</Text>
         </View>
       )}
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Shop by Category</Text>
-        <Text style={styles.seeAll}>See all</Text>
-      </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {categories.map((cat, i) => (
-          <TouchableOpacity key={i} style={styles.categoryCard}>
-            <View style={[styles.categoryIconBox, { backgroundColor: cat.bg }]}>
-              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            </View>
-            <Text style={styles.categoryText}>{cat.name}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryRow}
+      >
+        {categoryList.map((cat, i) => (
+          <TouchableOpacity
+            key={i}
+            onPress={() => setSelectedCategory(cat)}
+            style={[
+              styles.categoryBtn,
+              selectedCategory === cat &&
+                styles.activeCategory,
+            ]}
+          >
+            <Text
+              style={[
+                styles.categoryText,
+                selectedCategory === cat &&
+                  styles.activeCategoryText,
+              ]}
+            >
+              {cat}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Best Sellers</Text>
-      </View>
-
-      <View style={styles.bestSellerGrid}>
-        {products.map((item, i) => (
-          <View key={i} style={styles.bestSellerItem}>
+      <View style={styles.grid}>
+        {filteredProducts.map((item, i) => (
+          <View key={i} style={styles.item}>
             <ProductCard {...item} />
           </View>
         ))}
       </View>
-
     </ScrollView>
   );
 }
@@ -204,66 +202,24 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
 
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  headerActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-
-  deliverLabel: {
-    fontSize: 11,
-    color: '#9ca3af',
-  },
-
   location: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '700',
-  },
-
-  cartBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  logoutBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: '#fee2e2',
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 15,
   },
 
   searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#f3f4f6',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    marginTop: 16,
+    borderRadius: 12,
+    paddingHorizontal: 12,
     marginBottom: 20,
   },
 
   searchInput: {
-    flex: 1,
     height: 45,
   },
 
-  searchIcon: {
-    marginRight: 8,
-  },
-
-  bannerSlide: {
-    width: width - 32,
+  banner: {
     height: 150,
     borderRadius: 18,
     padding: 20,
@@ -282,102 +238,53 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  shopNow: {
-    color: '#fff',
-    marginTop: 10,
-  },
-
   bannerEmoji: {
-    fontSize: 48,
+    fontSize: 50,
   },
 
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#d1d5db',
-    marginHorizontal: 4,
-  },
-
-  activeDot: {
-    width: 18,
-    backgroundColor: '#111',
-  },
-
-  deliveryCard: {
+  orderCard: {
     backgroundColor: '#f0fdf4',
-    marginTop: 16,
     padding: 16,
-    borderRadius: 16,
-  },
-
-  deliverySmall: {
-    color: '#16a34a',
-    fontSize: 12,
-  },
-
-  deliveryBig: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
-
-  deliverySub: {
-    color: '#6b7280',
-    marginTop: 4,
-  },
-
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderRadius: 14,
     marginTop: 20,
-    marginBottom: 12,
   },
 
-  sectionTitle: {
-    fontSize: 18,
+  orderText: {
     fontWeight: '700',
   },
 
-  seeAll: {
-    color: '#1a7a4c',
+  categoryRow: {
+    marginTop: 20,
+    marginBottom: 16,
   },
 
-  categoryCard: {
-    alignItems: 'center',
-    marginRight: 12,
-    width: 80,
+  categoryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    marginRight: 10,
   },
 
-  categoryIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  categoryEmoji: {
-    fontSize: 28,
+  activeCategory: {
+    backgroundColor: '#16a34a',
   },
 
   categoryText: {
-    fontSize: 12,
-    marginTop: 6,
+    fontWeight: '600',
   },
 
-  bestSellerGrid: {
+  activeCategoryText: {
+    color: '#fff',
+  },
+
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
 
-  bestSellerItem: {
+  item: {
     width: '48%',
     marginBottom: 14,
   },
