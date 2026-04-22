@@ -23,7 +23,33 @@ const orderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    default: 'Pending',
+    default: 'Preparing',
+  },
+
+  paymentMethod: {
+    type: String,
+    default: 'UPI',
+  },
+
+  deliveryBoy: {
+    type: String,
+    default: '',
+  },
+
+  deliveryPhone: {
+    type: String,
+    default: '',
+  },
+
+  deliveryLocation: {
+    lat: {
+      type: Number,
+      default: 0,
+    },
+    lng: {
+      type: Number,
+      default: 0,
+    },
   },
 
   createdAt: {

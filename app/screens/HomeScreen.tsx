@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -10,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import ProductCard from '../components/ProductCard';
 
 const { width } = Dimensions.get('window');
@@ -60,22 +59,11 @@ const products = [
     quantity: '500 ml',
     image: 'https://images.unsplash.com/photo-1580910051074-3eb694886505',
   },
-  {
-    name: 'Potatoes',
-    price: 20,
-    quantity: '1 kg',
-    image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655',
-  },
-  {
-    name: 'Banana',
-    price: 40,
-    quantity: '1 dozen',
-    image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e',
-  },
 ];
 
 export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [latestOrder, setLatestOrder] = useState<any>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -85,6 +73,32 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      loadLatestOrder();
+    }, [])
+  );
+
+  const loadLatestOrder = async () => {
+    try {
+      const user = JSON.parse(
+        (await AsyncStorage.getItem('user')) || '{}'
+      );
+
+      const res = await fetch(
+        `http://172.20.10.4:5000/api/orders/my-orders/${user._id}`
+      );
+
+      const data = await res.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        setLatestOrder(data[0]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
     router.replace('/auth/login');
@@ -92,8 +106,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      
-      {/* Header */}
+
       <View style={styles.header}>
         <View>
           <Text style={styles.deliverLabel}>Delivering to</Text>
@@ -111,7 +124,6 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Search */}
       <View style={styles.searchWrapper}>
         <Text style={styles.searchIcon}>🔍</Text>
         <TextInput
@@ -120,7 +132,6 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Banner */}
       <View style={[styles.bannerSlide, { backgroundColor: banners[activeIndex].bg }]}>
         <View>
           <Text style={styles.bannerSubtitle}>{banners[activeIndex].subtitle}</Text>
@@ -130,7 +141,6 @@ export default function HomeScreen() {
         <Text style={styles.bannerEmoji}>{banners[activeIndex].emoji}</Text>
       </View>
 
-      {/* Banner Dots */}
       <View style={styles.dots}>
         {banners.map((_, i) => (
           <View
@@ -140,14 +150,20 @@ export default function HomeScreen() {
         ))}
       </View>
 
-      {/* Delivery Card */}
-      <View style={styles.deliveryCard}>
-        <Text style={styles.deliverySmall}>Your order is on its way</Text>
-        <Text style={styles.deliveryBig}>12 min away</Text>
-        <Text style={styles.deliverySub}>Rider: Ravi K.</Text>
-      </View>
+      {latestOrder && (
+        <View style={styles.deliveryCard}>
+          <Text style={styles.deliverySmall}>
+            Your order is {latestOrder.status}
+          </Text>
+          <Text style={styles.deliveryBig}>
+            ₹{latestOrder.total}
+          </Text>
+          <Text style={styles.deliverySub}>
+            Address: {latestOrder.address}
+          </Text>
+        </View>
+      )}
 
-      {/* Categories */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Shop by Category</Text>
         <Text style={styles.seeAll}>See all</Text>
@@ -164,10 +180,8 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      {/* Products */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Best Sellers</Text>
-        <Text style={styles.seeAll}>See all</Text>
       </View>
 
       <View style={styles.bestSellerGrid}>
@@ -239,13 +253,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  searchIcon: {
-    marginRight: 8,
-  },
-
   searchInput: {
     flex: 1,
     height: 45,
+  },
+
+  searchIcon: {
+    marginRight: 8,
   },
 
   bannerSlide: {
@@ -260,20 +274,17 @@ const styles = StyleSheet.create({
 
   bannerSubtitle: {
     color: '#fff',
-    fontSize: 12,
   },
 
   bannerTitle: {
     color: '#fff',
     fontSize: 20,
     fontWeight: '700',
-    marginTop: 4,
   },
 
   shopNow: {
     color: '#fff',
     marginTop: 10,
-    fontWeight: '600',
   },
 
   bannerEmoji: {
@@ -335,7 +346,6 @@ const styles = StyleSheet.create({
 
   seeAll: {
     color: '#1a7a4c',
-    fontWeight: '600',
   },
 
   categoryCard: {

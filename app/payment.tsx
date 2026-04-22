@@ -23,35 +23,20 @@ export default function PaymentScreen() {
 
   const handlePayment = async () => {
     try {
+      if (cart.length === 0) {
+        Alert.alert('Cart is empty');
+        return;
+      }
+
+      console.log('Payment clicked');
+
       const user = JSON.parse(
         (await AsyncStorage.getItem('user')) || '{}'
       );
 
+      console.log('User:', user);
+
       const address = user.address || 'No address';
-
-      if (method === 'UPI' || method === 'Card') {
-        const paymentRes = await fetch(
-          'http://172.20.10.4:5000/api/orders/create-payment',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              amount: total,
-            }),
-          }
-        );
-
-        const paymentData = await paymentRes.json();
-
-        console.log('Razorpay order:', paymentData);
-
-        Alert.alert(
-          'Payment Gateway',
-          `${method} payment initiated`
-        );
-      }
 
       const res = await fetch(
         'http://172.20.10.4:5000/api/orders/place-order',
@@ -72,20 +57,25 @@ export default function PaymentScreen() {
 
       const data = await res.json();
 
-      console.log('Saved order:', data);
+      console.log('Order saved:', data);
 
-      setTimeout(() => {
+      if (data.success) {
         checkout();
-      }, 500);
 
-      Alert.alert(
-        'Order Successful ✅',
-        `Paid via ${method}`
-      );
+        Alert.alert(
+          'Order Successful ✅',
+          `Payment via ${method}`
+        );
 
-      router.push('/screens/OrdersScreen' as any);
+        setTimeout(() => {
+          router.push('/screens/OrdersScreen' as any);
+        }, 500);
+      } else {
+        Alert.alert('Order failed');
+      }
+
     } catch (error) {
-      console.log(error);
+      console.log('Payment error:', error);
       Alert.alert('Payment failed');
     }
   };
@@ -130,9 +120,7 @@ export default function PaymentScreen() {
         style={styles.payBtn}
         onPress={handlePayment}
       >
-        <Text style={styles.payText}>
-          Pay ₹{total}
-        </Text>
+        <Text style={styles.payText}>Pay ₹{total}</Text>
       </TouchableOpacity>
     </View>
   );

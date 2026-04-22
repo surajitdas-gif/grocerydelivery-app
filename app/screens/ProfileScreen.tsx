@@ -49,7 +49,7 @@ export default function ProfileScreen() {
         (await AsyncStorage.getItem('user')) || '{}'
       );
 
-      const res = await fetch(
+      await fetch(
         `http://172.20.10.4:5000/api/update-profile/${user._id}`,
         {
           method: 'PUT',
@@ -64,14 +64,6 @@ export default function ProfileScreen() {
         }
       );
 
-      const text = await res.text();
-      console.log('Backend response:', text);
-
-      if (!text.startsWith('{')) {
-        Alert.alert('Server error: check backend route or IP');
-        return;
-      }
-
       const updatedUser = {
         _id: user._id,
         name: userName,
@@ -85,12 +77,7 @@ export default function ProfileScreen() {
         JSON.stringify(updatedUser)
       );
 
-      console.log('Saved user:', updatedUser);
-
-      setPhone(updatedUser.phone);
-      setAddress(updatedUser.address);
-
-      Alert.alert('Profile updated successfully');
+      Alert.alert('Profile updated successfully ✅');
     } catch (error) {
       console.log(error);
       Alert.alert('Update failed');
@@ -116,7 +103,8 @@ export default function ProfileScreen() {
     return (
       sum +
       order.items.reduce(
-        (s: number, item: any) => s + item.price * (item.qty || 1),
+        (s: number, item: any) =>
+          s + item.price * (item.qty || 1),
         0
       )
     );
@@ -194,11 +182,26 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.updateBtn} onPress={handleUpdateProfile}>
+      <TouchableOpacity
+        style={styles.updateBtn}
+        onPress={handleUpdateProfile}
+      >
         <Text style={styles.updateText}>Update Profile</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.logout} onPress={handleLogout}>
+      <TouchableOpacity
+        style={styles.updateBtn}
+        onPress={() => router.push('/delivery/dashboard' as any)}
+      >
+        <Text style={styles.updateText}>
+          Open Delivery Dashboard 🚚
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.logout}
+        onPress={handleLogout}
+      >
         <Text style={styles.logoutText}>🚪 Log out</Text>
       </TouchableOpacity>
 
