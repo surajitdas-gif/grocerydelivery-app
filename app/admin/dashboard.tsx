@@ -33,13 +33,21 @@ export default function AdminDashboard() {
 
       if (Array.isArray(data)) {
         setProducts(data);
+      } else {
+        setProducts([]);
       }
     } catch (error) {
       console.log(error);
+      setProducts([]);
     }
   };
 
   const uploadProduct = async () => {
+    if (!name || !price || !quantity || !category || !image) {
+      Alert.alert('All fields required');
+      return;
+    }
+
     try {
       const url = editId
         ? `http://172.20.10.4:5000/api/products/update-product/${editId}`
@@ -93,16 +101,18 @@ export default function AdminDashboard() {
   };
 
   const editProduct = (item: any) => {
-    setName(item.name);
-    setPrice(String(item.price));
-    setQuantity(item.quantity);
-    setImage(item.image);
-    setCategory(item.category);
-    setEditId(item._id);
+    setName(item.name || '');
+    setPrice(String(item.price || ''));
+    setQuantity(item.quantity || '');
+    setImage(item.image || '');
+    setCategory(item.category || '');
+    setEditId(item._id || '');
   };
 
   return (
     <ScrollView style={styles.container}>
+      <Text style={styles.title}>Admin Dashboard 🛠️</Text>
+
       <TextInput
         placeholder="Product name"
         value={name}
@@ -114,6 +124,7 @@ export default function AdminDashboard() {
         placeholder="Price"
         value={price}
         onChangeText={setPrice}
+        keyboardType="numeric"
         style={styles.input}
       />
 
@@ -144,24 +155,28 @@ export default function AdminDashboard() {
         </Text>
       </TouchableOpacity>
 
-      {products.map((item, index) => (
-        <View key={index} style={styles.productBox}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text>₹{item.price}</Text>
-          <Text>{item.quantity}</Text>
-          <Text>{item.category}</Text>
+      {products.length === 0 ? (
+        <Text style={styles.empty}>No products found</Text>
+      ) : (
+        products.map((item, index) => (
+          <View key={index} style={styles.productBox}>
+            <Text style={styles.name}>{item.name || 'No name'}</Text>
+            <Text>₹{item.price || 0}</Text>
+            <Text>{item.quantity || 'N/A'}</Text>
+            <Text>{item.category || 'N/A'}</Text>
 
-          <View style={styles.row}>
-            <TouchableOpacity onPress={() => editProduct(item)}>
-              <Text style={styles.edit}>Edit</Text>
-            </TouchableOpacity>
+            <View style={styles.row}>
+              <TouchableOpacity onPress={() => editProduct(item)}>
+                <Text style={styles.edit}>Edit</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => deleteProduct(item._id)}>
-              <Text style={styles.delete}>Delete</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteProduct(item._id)}>
+                <Text style={styles.delete}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      ))}
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -171,6 +186,12 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#fff',
+  },
+
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 20,
   },
 
   input: {
@@ -191,6 +212,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     fontWeight: '700',
+  },
+
+  empty: {
+    textAlign: 'center',
+    marginTop: 30,
+    color: '#666',
   },
 
   productBox: {

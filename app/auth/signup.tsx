@@ -1,3 +1,137 @@
+// import React, { useState } from 'react';
+// import {
+//   View,
+//   Text,
+//   TextInput,
+//   StyleSheet,
+//   TouchableOpacity,
+//   Alert,
+// } from 'react-native';
+// import { router } from 'expo-router';
+
+// export default function Signup() {
+//   const [name, setName] = useState('');
+//   const [email, setEmail] = useState('');
+//   const [password, setPassword] = useState('');
+
+//   const handleSignup = async () => {
+//     if (!name || !email || !password) {
+//       Alert.alert('Error', 'All fields required');
+//       return;
+//     }
+
+//     try {
+//       const response = await fetch('http://172.20.10.4:5000/api/signup', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({
+//           name,
+//           email,
+//           password,
+//         }),
+//       });
+
+//       const data = await response.json();
+
+//       if (response.ok) {
+//         Alert.alert('Success', data.message);
+
+//         router.push('/auth/login');
+//       } else {
+//         Alert.alert('Error', data.message);
+//       }
+
+//     } catch (error) {
+//       console.log(error);
+//       Alert.alert('Error', String(error));
+//     }
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.title}>Signup</Text>
+
+//       <TextInput
+//         placeholder="Name"
+//         style={styles.input}
+//         value={name}
+//         onChangeText={setName}
+//       />
+
+//       <TextInput
+//         placeholder="Email"
+//         style={styles.input}
+//         value={email}
+//         onChangeText={setEmail}
+//       />
+
+//       <TextInput
+//         placeholder="Password"
+//         style={styles.input}
+//         secureTextEntry
+//         value={password}
+//         onChangeText={setPassword}
+//       />
+
+//       <TouchableOpacity style={styles.button} onPress={handleSignup}>
+//         <Text style={styles.buttonText}>Create Account</Text>
+//       </TouchableOpacity>
+
+//       <TouchableOpacity onPress={() => router.push('/auth/login')}>
+//         <Text style={styles.loginText}>Already have account? Login</Text>
+//       </TouchableOpacity>
+//     </View>
+//   );
+// }
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     padding: 24,
+//     backgroundColor: '#fff',
+//   },
+
+//   title: {
+//     fontSize: 28,
+//     fontWeight: 'bold',
+//     marginBottom: 30,
+//     textAlign: 'center',
+//   },
+
+//   input: {
+//     borderWidth: 1,
+//     borderColor: '#ddd',
+//     padding: 14,
+//     borderRadius: 12,
+//     marginBottom: 16,
+//   },
+
+//   button: {
+//     backgroundColor: '#16a34a',
+//     padding: 15,
+//     borderRadius: 10,
+//     marginTop: 10,
+//   },
+
+//   buttonText: {
+//     color: '#fff',
+//     textAlign: 'center',
+//     fontSize: 16,
+//     fontWeight: 'bold',
+//   },
+
+//   loginText: {
+//     textAlign: 'center',
+//     marginTop: 20,
+//     color: '#16a34a',
+//     fontSize: 16,
+//   },
+// });
+
+
 import React, { useState } from 'react';
 import {
   View,
@@ -13,6 +147,7 @@ export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('user');
 
   const handleSignup = async () => {
     if (!name || !email || !password) {
@@ -30,6 +165,7 @@ export default function Signup() {
           name,
           email,
           password,
+          role,
         }),
       });
 
@@ -37,7 +173,6 @@ export default function Signup() {
 
       if (response.ok) {
         Alert.alert('Success', data.message);
-
         router.push('/auth/login');
       } else {
         Alert.alert('Error', data.message);
@@ -52,6 +187,36 @@ export default function Signup() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Signup</Text>
+
+      {/* Role Selection */}
+      <View style={styles.roleRow}>
+        <TouchableOpacity
+          style={[styles.roleBtn, role === 'user' && styles.activeRole]}
+          onPress={() => setRole('user')}
+        >
+          <Text style={role === 'user' ? styles.activeRoleText : styles.roleText}>
+            User
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.roleBtn, role === 'delivery' && styles.activeRole]}
+          onPress={() => setRole('delivery')}
+        >
+          <Text style={role === 'delivery' ? styles.activeRoleText : styles.roleText}>
+            Delivery
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.roleBtn, role === 'admin' && styles.activeRole]}
+          onPress={() => setRole('admin')}
+        >
+          <Text style={role === 'admin' ? styles.activeRoleText : styles.roleText}>
+            Admin
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <TextInput
         placeholder="Name"
@@ -99,6 +264,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 30,
     textAlign: 'center',
+  },
+
+  roleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 8,
+  },
+
+  roleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+  },
+
+  activeRole: {
+    backgroundColor: '#16a34a',
+  },
+
+  roleText: {
+    color: '#111827',
+    fontWeight: '600',
+  },
+
+  activeRoleText: {
+    color: '#fff',
+    fontWeight: '700',
   },
 
   input: {

@@ -8,7 +8,7 @@ router.post('/signup', async (req, res) => {
   try {
     console.log(req.body);
 
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
 
@@ -24,6 +24,7 @@ router.post('/signup', async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      role,
     });
 
     await newUser.save();
@@ -41,13 +42,19 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(400).json({
         message: 'User not found',
+      });
+    }
+
+    if (user.role !== role) {
+      return res.status(400).json({
+        message: 'Wrong role selected',
       });
     }
 

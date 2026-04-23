@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
@@ -25,29 +26,18 @@ export default function DeliveryDashboard() {
 
       const data = await res.json();
 
-      console.log('Dashboard orders:', data);
-
       if (Array.isArray(data)) {
-        const validOrders = data.filter(
-          (order: any) =>
-            order.items &&
-            order.items.length > 0 &&
-            order.total > 0
-        );
-
-        setOrders(validOrders);
+        setOrders(data);
       } else {
         setOrders([]);
       }
     } catch (error) {
       console.log('Dashboard error:', error);
+      setOrders([]);
     }
   };
 
-  const updateStatus = async (
-    id: string,
-    status: string
-  ) => {
+  const updateStatus = async (id: string, status: string) => {
     try {
       await fetch(
         `http://172.20.10.4:5000/api/orders/status/${id}`,
@@ -60,6 +50,7 @@ export default function DeliveryDashboard() {
         }
       );
 
+      Alert.alert('Updated', `Order marked as ${status}`);
       loadOrders();
     } catch (error) {
       console.log(error);
@@ -73,64 +64,70 @@ export default function DeliveryDashboard() {
       {orders.length === 0 ? (
         <Text style={styles.empty}>No orders available</Text>
       ) : (
-        orders.map((order: any, index: number) => (
-          <View key={index} style={styles.card}>
-            <Text style={styles.order}>
-              Order ID: {order._id}
-            </Text>
+        orders.map((order: any, index: number) => {
+          const safeItems = Array.isArray(order.items) ? order.items : [];
 
-            <Text>User ID: {order.userId}</Text>
-
-            <Text>
-              Address: {order.address || 'No address'}
-            </Text>
-
-            <Text>Total: ₹{order.total}</Text>
-
-            <Text>
-              Payment: {order.paymentMethod || 'UPI'}
-            </Text>
-
-            <Text>Status: {order.status}</Text>
-
-            <Text style={styles.itemsTitle}>Items:</Text>
-
-            {order.items.map((item: any, i: number) => (
-              <Text key={i}>
-                • {item.name} × {item.qty || 1}
+          return (
+            <View key={index} style={styles.card}>
+              <Text style={styles.order}>
+                Order ID: {(order._id || '').slice(-8)}
               </Text>
-            ))}
 
-            <View style={styles.btnRow}>
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() =>
-                  updateStatus(order._id, 'Preparing')
-                }
-              >
-                <Text>Preparing</Text>
-              </TouchableOpacity>
+              <Text>User ID: {order.userId || 'N/A'}</Text>
 
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() =>
-                  updateStatus(order._id, 'Out for Delivery')
-                }
-              >
-                <Text>Out 🚚</Text>
-              </TouchableOpacity>
+              <Text>
+                Address: {order.address || 'No address'}
+              </Text>
 
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() =>
-                  updateStatus(order._id, 'Delivered')
-                }
-              >
-                <Text>Delivered ✅</Text>
-              </TouchableOpacity>
+              <Text>Total: ₹{order.total || 0}</Text>
+
+              <Text>
+                Payment: {order.paymentMethod || 'UPI'}
+              </Text>
+
+              <Text>Status: {order.status || 'Pending'}</Text>
+
+              <Text style={styles.itemsTitle}>Items:</Text>
+
+              {safeItems.length > 0 ? (
+                safeItems.map((item: any, i: number) => (
+                  <Text key={i}>
+                    • {item.name || 'Product'} × {item.qty || 1}
+                  </Text>
+                ))
+              ) : (
+                <Text>No items</Text>
+              )}
+
+              <View style={styles.btnRow}>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => updateStatus(order._id, 'Preparing')}
+                >
+                  <Text>Preparing</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() =>
+                    updateStatus(order._id, 'Out for Delivery')
+                  }
+                >
+                  <Text>Out 🚚</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() =>
+                    updateStatus(order._id, 'Delivered')
+                  }
+                >
+                  <Text>Delivered ✅</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))
+          );
+        })
       )}
     </ScrollView>
   );
