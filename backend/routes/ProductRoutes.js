@@ -19,6 +19,23 @@ router.post('/add-product', async (req, res) => {
   }
 });
 
+ router.get('/search/:keyword', async (req, res) => {
+  try {
+    const products = await Product.find({
+      name: {
+        $regex: req.params.keyword,
+        $options: 'i',
+      },
+    });
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
 router.get('/all-products', async (req, res) => {
   try {
     const products = await Product.find();
