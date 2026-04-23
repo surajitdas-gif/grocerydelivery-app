@@ -1,318 +1,4 @@
-// import React, { useEffect, useState } from 'react';
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   TextInput,
-//   StyleSheet,
-//   TouchableOpacity,
-//   Dimensions,
-// } from 'react-native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { useFocusEffect } from 'expo-router';
-// import ProductCard from '../components/ProductCard';
 
-// const { width } = Dimensions.get('window');
-
-// const banners = [
-//   {
-//     id: '1',
-//     title: 'Farm-fresh vegetables',
-//     subtitle: 'Fresh today',
-//     emoji: '🥦',
-//     bg: '#2d7a4f',
-//   },
-//   {
-//     id: '2',
-//     title: 'Seasonal fruits',
-//     subtitle: 'Limited offer',
-//     emoji: '🥭',
-//     bg: '#ea580c',
-//   },
-//   {
-//     id: '3',
-//     title: 'Organic dairy',
-//     subtitle: 'Daily dairy',
-//     emoji: '🥛',
-//     bg: '#3b82f6',
-//   },
-// ];
-
-// const categoryList = [
-//   'All',
-//   'Vegetables',
-//   'Fruits',
-//   'Milk',
-//   'Beauty',
-// ];
-
-// export default function HomeScreen() {
-//   const [activeIndex, setActiveIndex] = useState(0);
-//   const [latestOrder, setLatestOrder] = useState<any>(null);
-//   const [products, setProducts] = useState<any[]>([]);
-//   const [selectedCategory, setSelectedCategory] =
-//     useState('All');
-//   const [search, setSearch] = useState('');
-
-//   useEffect(() => {
-//     const interval = setInterval(() => {
-//       setActiveIndex((prev) => (prev + 1) % banners.length);
-//     }, 3000);
-
-//     return () => clearInterval(interval);
-//   }, []);
-
-//   useFocusEffect(
-//     React.useCallback(() => {
-//       loadLatestOrder();
-//       loadProducts();
-//     }, [])
-//   );
-
-//   const loadLatestOrder = async () => {
-//     try {
-//       const user = JSON.parse(
-//         (await AsyncStorage.getItem('user')) || '{}'
-//       );
-
-//       const res = await fetch(
-//         `http://172.20.10.4:5000/api/orders/my-orders/${user._id}`
-//       );
-
-//       const data = await res.json();
-
-//       if (Array.isArray(data) && data.length > 0) {
-//         setLatestOrder(data[0]);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   const loadProducts = async () => {
-//     try {
-//       const res = await fetch(
-//         'http://172.20.10.4:5000/api/products/all-products'
-//       );
-
-//       const data = await res.json();
-
-//       if (Array.isArray(data)) {
-//         setProducts(data);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   const searchProducts = async (text: string) => {
-//     setSearch(text);
-
-//     if (text.length === 0) {
-//       loadProducts();
-//       return;
-//     }
-
-//     try {
-//       const res = await fetch(
-//         `http://172.20.10.4:5000/api/products/search/${text}`
-//       );
-
-//       const data = await res.json();
-
-//       if (Array.isArray(data)) {
-//         setProducts(data);
-//       }
-//     } catch (error) {
-//       console.log(error);
-//     }
-//   };
-
-//   const filteredProducts =
-//     selectedCategory === 'All'
-//       ? products
-//       : products.filter(
-//           item =>
-//             item.category?.toLowerCase() ===
-//             selectedCategory.toLowerCase()
-//         );
-
-//   return (
-//     <ScrollView style={styles.container}>
-//       <Text style={styles.location}>📍 Village Delivery</Text>
-
-//       <View style={styles.searchWrapper}>
-//         <TextInput
-//           placeholder="Search products..."
-//           style={styles.searchInput}
-//           value={search}
-//           onChangeText={searchProducts}
-//         />
-//       </View>
-
-//       <View
-//         style={[
-//           styles.banner,
-//           { backgroundColor: banners[activeIndex].bg },
-//         ]}
-//       >
-//         <View>
-//           <Text style={styles.bannerSubtitle}>
-//             {banners[activeIndex].subtitle}
-//           </Text>
-//           <Text style={styles.bannerTitle}>
-//             {banners[activeIndex].title}
-//           </Text>
-//         </View>
-
-//         <Text style={styles.bannerEmoji}>
-//           {banners[activeIndex].emoji}
-//         </Text>
-//       </View>
-
-//       {latestOrder && (
-//         <View style={styles.orderCard}>
-//           <Text style={styles.orderText}>
-//             Your order is {latestOrder.status} 🚚
-//           </Text>
-//           <Text>₹{latestOrder.total}</Text>
-//         </View>
-//       )}
-
-//       <ScrollView
-//         horizontal
-//         showsHorizontalScrollIndicator={false}
-//         style={styles.categoryRow}
-//       >
-//         {categoryList.map((cat, i) => (
-//           <TouchableOpacity
-//             key={i}
-//             onPress={() => setSelectedCategory(cat)}
-//             style={[
-//               styles.categoryBtn,
-//               selectedCategory === cat &&
-//                 styles.activeCategory,
-//             ]}
-//           >
-//             <Text
-//               style={[
-//                 styles.categoryText,
-//                 selectedCategory === cat &&
-//                   styles.activeCategoryText,
-//               ]}
-//             >
-//               {cat}
-//             </Text>
-//           </TouchableOpacity>
-//         ))}
-//       </ScrollView>
-
-//       <View style={styles.grid}>
-//         {filteredProducts.map((item, i) => (
-//           <View key={i} style={styles.item}>
-//             <ProductCard {...item} />
-//           </View>
-//         ))}
-//       </View>
-//     </ScrollView>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: '#fff',
-//     padding: 16,
-//     marginTop: 40,
-//   },
-
-//   location: {
-//     fontSize: 18,
-//     fontWeight: '700',
-//     marginBottom: 15,
-//   },
-
-//   searchWrapper: {
-//     backgroundColor: '#f3f4f6',
-//     borderRadius: 12,
-//     paddingHorizontal: 12,
-//     marginBottom: 20,
-//   },
-
-//   searchInput: {
-//     height: 45,
-//   },
-
-//   banner: {
-//     height: 150,
-//     borderRadius: 18,
-//     padding: 20,
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//   },
-
-//   bannerSubtitle: {
-//     color: '#fff',
-//   },
-
-//   bannerTitle: {
-//     color: '#fff',
-//     fontSize: 20,
-//     fontWeight: '700',
-//   },
-
-//   bannerEmoji: {
-//     fontSize: 50,
-//   },
-
-//   orderCard: {
-//     backgroundColor: '#f0fdf4',
-//     padding: 16,
-//     borderRadius: 14,
-//     marginTop: 20,
-//   },
-
-//   orderText: {
-//     fontWeight: '700',
-//   },
-
-//   categoryRow: {
-//     marginTop: 20,
-//     marginBottom: 16,
-//   },
-
-//   categoryBtn: {
-//     paddingHorizontal: 16,
-//     paddingVertical: 10,
-//     borderRadius: 20,
-//     backgroundColor: '#f3f4f6',
-//     marginRight: 10,
-//   },
-
-//   activeCategory: {
-//     backgroundColor: '#16a34a',
-//   },
-
-//   categoryText: {
-//     fontWeight: '600',
-//   },
-
-//   activeCategoryText: {
-//     color: '#fff',
-//   },
-
-//   grid: {
-//     flexDirection: 'row',
-//     flexWrap: 'wrap',
-//     justifyContent: 'space-between',
-//   },
-
-//   item: {
-//     width: '48%',
-//     marginBottom: 14,
-//   },
-// });
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -323,6 +9,8 @@ import {
   TouchableOpacity,
   Dimensions,
   Image,
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, router } from 'expo-router';
@@ -330,51 +18,64 @@ import ProductCard from '../components/ProductCard';
 
 const { width } = Dimensions.get('window');
 
-const banners = [
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const BASE_URL = 'http://172.20.10.4:5000/api';
+
+const BANNERS = [
   {
     id: '1',
-    title: 'Farm-fresh vegetables',
-    subtitle: 'Fresh today',
+    tag: 'FRESH TODAY',
+    title: 'Farm-fresh\nVegetables',
     emoji: '🥦',
-    bg: '#2d7a4f',
+    accent: '#4ade80',
+    bg: '#052e16',
+    overlay: '#14532d',
   },
   {
     id: '2',
-    title: 'Seasonal fruits',
-    subtitle: 'Limited offer',
+    tag: 'LIMITED OFFER',
+    title: 'Seasonal\nFruits',
     emoji: '🥭',
-    bg: '#ea580c',
+    accent: '#fb923c',
+    bg: '#431407',
+    overlay: '#7c2d12',
   },
   {
     id: '3',
-    title: 'Organic dairy',
-    subtitle: 'Daily dairy',
+    tag: 'DAILY DAIRY',
+    title: 'Organic\nDairy',
     emoji: '🥛',
-    bg: '#3b82f6',
+    accent: '#60a5fa',
+    bg: '#172554',
+    overlay: '#1e3a8a',
   },
 ];
 
-const categoryList = [
-  'All',
-  'Vegetables',
-  'Fruits',
-  'Milk',
-  'Beauty',
+const CATEGORIES = [
+  { key: 'All', icon: '✦' },
+  { key: 'Vegetables', icon: '🥕' },
+  { key: 'Fruits', icon: '🍓' },
+  { key: 'Milk', icon: '🥛' },
+  { key: 'Beauty', icon: '✨' },
 ];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [latestOrder, setLatestOrder] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] =
-    useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [searchFocused, setSearchFocused] = useState(false);
 
+  // Auto-rotate banner
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % banners.length);
-    }, 3000);
-
+      setActiveIndex((prev) => (prev + 1) % BANNERS.length);
+    }, 3500);
     return () => clearInterval(interval);
   }, []);
 
@@ -385,289 +86,702 @@ export default function HomeScreen() {
     }, [])
   );
 
+  // ── API Calls (unchanged logic) ──────────────────────────────────────────
+
   const loadLatestOrder = async () => {
     try {
       const user = JSON.parse(
         (await AsyncStorage.getItem('user')) || '{}'
       );
-
       const res = await fetch(
-        `http://172.20.10.4:5000/api/orders/my-orders/${user._id}`
+        `${BASE_URL}/orders/my-orders/${user._id}`
       );
-
       const data = await res.json();
-
       if (Array.isArray(data) && data.length > 0) {
         setLatestOrder(data[0]);
       }
     } catch (error) {
-      console.log(error);
+      console.log('Order fetch error:', error);
     }
   };
 
   const loadProducts = async () => {
+    setLoadingProducts(true);
     try {
-      const res = await fetch(
-        'http://172.20.10.4:5000/api/products/all-products'
-      );
-
+      const res = await fetch(`${BASE_URL}/products/all-products`);
       const data = await res.json();
-
       if (Array.isArray(data)) {
         setProducts(data);
       }
     } catch (error) {
-      console.log(error);
+      console.log('Products fetch error:', error);
+    } finally {
+      setLoadingProducts(false);
     }
   };
 
   const searchProducts = async (text: string) => {
     setSearch(text);
-
     if (text.length === 0) {
       loadProducts();
       return;
     }
-
     try {
-      const res = await fetch(
-        `http://172.20.10.4:5000/api/products/search/${text}`
-      );
-
+      const res = await fetch(`${BASE_URL}/products/search/${text}`);
       const data = await res.json();
-
       if (Array.isArray(data)) {
         setProducts(data);
       }
     } catch (error) {
-      console.log(error);
+      console.log('Search error:', error);
     }
   };
+
+  // ── Derived State ────────────────────────────────────────────────────────
 
   const filteredProducts =
     selectedCategory === 'All'
       ? products
       : products.filter(
-          item =>
+          (item) =>
             item.category?.toLowerCase() ===
             selectedCategory.toLowerCase()
         );
 
+  const banner = BANNERS[activeIndex];
+
+  // ── Render ───────────────────────────────────────────────────────────────
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.location}>📍 Village Delivery</Text>
-
-      <View style={styles.searchWrapper}>
-        <TextInput
-          placeholder="Search products..."
-          style={styles.searchInput}
-          value={search}
-          onChangeText={searchProducts}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={styles.mapCard}
-        onPress={() => router.push('/screens/MapScreen' as any)}
-      >
-        <Image
-          source={{
-            uri: 'https://maps.gstatic.com/tactile/basepage/pegman_sherlock.png',
-          }}
-          style={styles.mapImage}
-        />
-
-        <View>
-          <Text style={styles.mapTitle}>Track Delivery</Text>
-          <Text style={styles.mapSub}>Tap to open full route</Text>
-        </View>
-      </TouchableOpacity>
-
-      <View
-        style={[
-          styles.banner,
-          { backgroundColor: banners[activeIndex].bg },
-        ]}
-      >
-        <View>
-          <Text style={styles.bannerSubtitle}>
-            {banners[activeIndex].subtitle}
-          </Text>
-          <Text style={styles.bannerTitle}>
-            {banners[activeIndex].title}
-          </Text>
-        </View>
-
-        <Text style={styles.bannerEmoji}>
-          {banners[activeIndex].emoji}
-        </Text>
-      </View>
-
-      {latestOrder && (
-        <View style={styles.orderCard}>
-          <Text style={styles.orderText}>
-            Your order is {latestOrder.status} 🚚
-          </Text>
-          <Text>₹{latestOrder.total}</Text>
-        </View>
-      )}
+    <View style={styles.root}>
+      <StatusBar barStyle="dark-content" />
 
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoryRow}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {categoryList.map((cat, i) => (
-          <TouchableOpacity
-            key={i}
-            onPress={() => setSelectedCategory(cat)}
-            style={[
-              styles.categoryBtn,
-              selectedCategory === cat &&
-                styles.activeCategory,
-            ]}
-          >
-            <Text
-              style={[
-                styles.categoryText,
-                selectedCategory === cat &&
-                  styles.activeCategoryText,
-              ]}
-            >
-              {cat}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.grid}>
-        {filteredProducts.map((item, i) => (
-          <View key={i} style={styles.item}>
-            <ProductCard {...item} />
+        {/* ── Header ── */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerGreet}>Good morning 👋</Text>
+            <View style={styles.locationRow}>
+              <Text style={styles.locationPin}>📍</Text>
+              <Text style={styles.locationText}>Village Delivery</Text>
+            </View>
           </View>
-        ))}
-      </View>
-    </ScrollView>
+          <TouchableOpacity
+            style={styles.profileOrb}
+            onPress={() => router.push('/screens/ProfileScreen' as any)}
+          >
+            <Text style={styles.profileOrbText}>U</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Search ── */}
+        <View
+          style={[
+            styles.searchBar,
+            searchFocused && styles.searchBarFocused,
+          ]}
+        >
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            placeholder="Search vegetables, fruits, dairy…"
+            placeholderTextColor="#9ca3af"
+            style={styles.searchInput}
+            value={search}
+            onChangeText={searchProducts}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => searchProducts('')}>
+              <Text style={styles.clearIcon}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* ── Track Delivery Card ── */}
+        <TouchableOpacity
+          style={styles.trackCard}
+          onPress={() => router.push('/screens/MapScreen' as any)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.trackLeft}>
+            <View style={styles.trackIconWrap}>
+              <Text style={styles.trackIconText}>🗺</Text>
+            </View>
+            <View>
+              <Text style={styles.trackTitle}>Track Delivery</Text>
+              <Text style={styles.trackSub}>Tap to open live route</Text>
+            </View>
+          </View>
+          <View style={styles.trackChevron}>
+            <Text style={styles.trackChevronText}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Banner ── */}
+        <View style={[styles.banner, { backgroundColor: banner.bg }]}>
+          <View
+            style={[styles.bannerAccentBar, { backgroundColor: banner.overlay }]}
+          />
+          <View style={styles.bannerContent}>
+            <View>
+              <View
+                style={[
+                  styles.bannerTag,
+                  { backgroundColor: banner.accent + '22' },
+                ]}
+              >
+                <Text
+                  style={[styles.bannerTagText, { color: banner.accent }]}
+                >
+                  {banner.tag}
+                </Text>
+              </View>
+              <Text style={styles.bannerTitle}>{banner.title}</Text>
+              <TouchableOpacity
+                style={[
+                  styles.bannerBtn,
+                  { backgroundColor: banner.accent },
+                ]}
+              >
+                <Text style={styles.bannerBtnText}>Shop Now</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
+          </View>
+
+          {/* Dots */}
+          <View style={styles.bannerDots}>
+            {BANNERS.map((_, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => setActiveIndex(i)}
+                style={[
+                  styles.dot,
+                  i === activeIndex && styles.dotActive,
+                ]}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* ── Latest Order ── */}
+        {latestOrder && (
+          <TouchableOpacity
+            style={styles.orderCard}
+            onPress={() => router.push('/screens/OrdersScreen' as any)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.orderLeft}>
+              <View style={styles.orderIconWrap}>
+                <Text style={styles.orderIcon}>🚚</Text>
+              </View>
+              <View>
+                <Text style={styles.orderLabel}>Active Order</Text>
+                <Text style={styles.orderStatus}>
+                  Status:{' '}
+                  <Text style={styles.orderStatusValue}>
+                    {latestOrder.status}
+                  </Text>
+                </Text>
+              </View>
+            </View>
+            <View style={styles.orderRight}>
+              <Text style={styles.orderAmount}>₹{latestOrder.total}</Text>
+              <Text style={styles.orderTrack}>Track ›</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {/* ── Section Header ── */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Browse</Text>
+          <TouchableOpacity>
+            <Text style={styles.sectionLink}>See all</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Categories ── */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryRow}
+        >
+          {CATEGORIES.map((cat, i) => (
+            <TouchableOpacity
+              key={i}
+              onPress={() => setSelectedCategory(cat.key)}
+              style={[
+                styles.categoryBtn,
+                selectedCategory === cat.key && styles.categoryBtnActive,
+              ]}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.categoryIcon}>{cat.icon}</Text>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === cat.key &&
+                    styles.categoryTextActive,
+                ]}
+              >
+                {cat.key}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* ── Products Grid ── */}
+        {loadingProducts ? (
+          <View style={styles.loader}>
+            <ActivityIndicator size="large" color="#16a34a" />
+            <Text style={styles.loaderText}>Loading products…</Text>
+          </View>
+        ) : filteredProducts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyEmoji}>🛒</Text>
+            <Text style={styles.emptyText}>No products found</Text>
+            <Text style={styles.emptySub}>Try a different category or search</Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {filteredProducts.map((item, i) => (
+              <View key={i} style={styles.gridItem}>
+                <ProductCard {...item} />
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Bottom padding */}
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-    marginTop: 40,
+    backgroundColor: '#f9fafb',
   },
 
-  location: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 15,
+  scroll: {
+    flex: 1,
   },
 
-  searchWrapper: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+  scrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 56,
+  },
+
+  // Header
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
   },
 
-  searchInput: {
-    height: 45,
+  headerGreet: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+    marginBottom: 3,
+    letterSpacing: 0.2,
   },
 
-  mapCard: {
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 14,
-    marginBottom: 16,
+    gap: 4,
   },
 
-  mapImage: {
-    width: 45,
-    height: 45,
-    marginRight: 12,
+  locationPin: {
+    fontSize: 14,
   },
 
-  mapTitle: {
+  locationText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+    letterSpacing: -0.3,
+  },
+
+  profileOrb: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#16a34a',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  profileOrbText: {
+    color: '#fff',
     fontWeight: '700',
     fontSize: 15,
   },
 
-  mapSub: {
-    color: '#666',
-    fontSize: 12,
+  // Search
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 2,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    gap: 8,
   },
 
+  searchBarFocused: {
+    borderColor: '#16a34a',
+  },
+
+  searchIcon: {
+    fontSize: 16,
+  },
+
+  searchInput: {
+    flex: 1,
+    height: 46,
+    fontSize: 14,
+    color: '#111827',
+  },
+
+  clearIcon: {
+    fontSize: 13,
+    color: '#9ca3af',
+    padding: 4,
+  },
+
+  // Track Delivery Card
+  trackCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+
+  trackLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  trackIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#f0fdf4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  trackIconText: {
+    fontSize: 20,
+  },
+
+  trackTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 2,
+  },
+
+  trackSub: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+
+  trackChevron: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0fdf4',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  trackChevronText: {
+    fontSize: 20,
+    color: '#16a34a',
+    lineHeight: 26,
+  },
+
+  // Banner
   banner: {
-    height: 150,
-    borderRadius: 18,
-    padding: 20,
+    borderRadius: 22,
+    overflow: 'hidden',
+    marginBottom: 16,
+    minHeight: 170,
+  },
+
+  bannerAccentBar: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '40%',
+    borderTopLeftRadius: 60,
+    borderBottomLeftRadius: 80,
+  },
+
+  bannerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    padding: 22,
+    paddingBottom: 36,
   },
 
-  bannerSubtitle: {
-    color: '#fff',
+  bannerTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+
+  bannerTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 
   bannerTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 22,
+    fontWeight: '800',
+    lineHeight: 28,
+    letterSpacing: -0.5,
+    marginBottom: 14,
+  },
+
+  bannerBtn: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+
+  bannerBtnText: {
+    color: '#052e16',
     fontWeight: '700',
+    fontSize: 12,
   },
 
   bannerEmoji: {
-    fontSize: 50,
+    fontSize: 72,
   },
 
+  bannerDots: {
+    position: 'absolute',
+    bottom: 12,
+    left: 22,
+    flexDirection: 'row',
+    gap: 6,
+  },
+
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+
+  dotActive: {
+    width: 18,
+    backgroundColor: '#fff',
+  },
+
+  // Order Card
   orderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#f0fdf4',
-    padding: 16,
-    borderRadius: 14,
-    marginTop: 20,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
   },
 
-  orderText: {
+  orderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+
+  orderIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#dcfce7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  orderIcon: {
+    fontSize: 18,
+  },
+
+  orderLabel: {
+    fontSize: 11,
+    color: '#16a34a',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+
+  orderStatus: {
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '500',
+  },
+
+  orderStatusValue: {
     fontWeight: '700',
+    color: '#111827',
+    textTransform: 'capitalize',
   },
 
+  orderRight: {
+    alignItems: 'flex-end',
+  },
+
+  orderAmount: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+
+  orderTrack: {
+    fontSize: 12,
+    color: '#16a34a',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+
+  // Section Header
+  sectionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: -0.3,
+  },
+
+  sectionLink: {
+    fontSize: 13,
+    color: '#16a34a',
+    fontWeight: '600',
+  },
+
+  // Categories
   categoryRow: {
-    marginTop: 20,
-    marginBottom: 16,
+    paddingBottom: 16,
+    gap: 8,
   },
 
   categoryBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-    marginRight: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
   },
 
-  activeCategory: {
-    backgroundColor: '#16a34a',
+  categoryBtnActive: {
+    backgroundColor: '#052e16',
+    borderColor: '#052e16',
+  },
+
+  categoryIcon: {
+    fontSize: 14,
   },
 
   categoryText: {
     fontWeight: '600',
+    fontSize: 13,
+    color: '#374151',
   },
 
-  activeCategoryText: {
-    color: '#fff',
+  categoryTextActive: {
+    color: '#4ade80',
   },
 
+  // Grid
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    gap: 12,
   },
 
-  item: {
-    width: '48%',
-    marginBottom: 14,
+  gridItem: {
+    width: (width - 48) / 2,
+  },
+
+  // Loader
+  loader: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    gap: 12,
+  },
+
+  loaderText: {
+    color: '#9ca3af',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 52,
+  },
+
+  emptyEmoji: {
+    fontSize: 42,
+    marginBottom: 12,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 4,
+  },
+
+  emptySub: {
+    fontSize: 13,
+    color: '#9ca3af',
   },
 });
