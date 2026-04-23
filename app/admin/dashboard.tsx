@@ -7,7 +7,117 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  StatusBar,
+  KeyboardTypeOptions,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+
+type Product = {
+  _id?: string;
+  name: string;
+  price: number;
+  quantity: string;
+  image: string;
+  category: string;
+};
+
+function FormField({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  keyboardType,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (t: string) => void;
+  keyboardType?: KeyboardTypeOptions;
+}) {
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <View style={fieldStyles.wrapper}>
+      <Text style={fieldStyles.label}>{label}</Text>
+
+      <TextInput
+        placeholder={placeholder}
+        placeholderTextColor="#94a3b8"
+        value={value}
+        onChangeText={onChangeText}
+        keyboardType={keyboardType ?? 'default'}
+        style={[
+          fieldStyles.input,
+          focused && fieldStyles.inputFocused,
+        ]}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+    </View>
+  );
+}
+
+const fieldStyles = StyleSheet.create({
+  wrapper: {
+    marginBottom: 14,
+  },
+
+  label: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748b',
+    marginBottom: 6,
+  },
+
+  input: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+
+  inputFocused: {
+    borderColor: '#6366f1',
+    backgroundColor: '#fff',
+  },
+});
+
+function ProductCard({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: Product;
+  onEdit: (item: Product) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.productName}>{item.name}</Text>
+      <Text>₹{item.price}</Text>
+      <Text>{item.category}</Text>
+
+      <View style={styles.actionRow}>
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => onEdit(item)}
+        >
+          <Text>Edit</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={() => onDelete(item._id || '')}
+        >
+          <Text>Delete</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
 
 export default function AdminDashboard() {
   const [name, setName] = useState('');
@@ -15,8 +125,7 @@ export default function AdminDashboard() {
   const [quantity, setQuantity] = useState('');
   const [image, setImage] = useState('');
   const [category, setCategory] = useState('');
-
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [editId, setEditId] = useState('');
 
   useEffect(() => {
@@ -30,221 +139,249 @@ export default function AdminDashboard() {
       );
 
       const data = await res.json();
+      setProducts(Array.isArray(data) ? data : []);
 
-      if (Array.isArray(data)) {
-        setProducts(data);
-      } else {
-        setProducts([]);
-      }
-    } catch (error) {
-      console.log(error);
+    } catch {
       setProducts([]);
     }
   };
 
   const uploadProduct = async () => {
-    if (!name || !price || !quantity || !category || !image) {
-      Alert.alert('All fields required');
+    if (!name || !price || !quantity || !image || !category) {
+      Alert.alert('Fill all fields');
       return;
     }
 
-    try {
-      const url = editId
-        ? `http://172.20.10.4:5000/api/products/update-product/${editId}`
-        : 'http://172.20.10.4:5000/api/products/add-product';
+    const url = editId
+      ? `http://172.20.10.4:5000/api/products/update-product/${editId}`
+      : 'http://172.20.10.4:5000/api/products/add-product';
 
-      const method = editId ? 'PUT' : 'POST';
+    await fetch(url, {
+      method: editId ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name,
+        price: Number(price),
+        quantity,
+        image,
+        category,
+      }),
+    });
 
-      await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          price: Number(price),
-          quantity,
-          image,
-          category,
-        }),
-      });
+    setName('');
+    setPrice('');
+    setQuantity('');
+    setImage('');
+    setCategory('');
+    setEditId('');
 
-      Alert.alert(editId ? 'Updated ✅' : 'Uploaded ✅');
-
-      setName('');
-      setPrice('');
-      setQuantity('');
-      setImage('');
-      setCategory('');
-      setEditId('');
-
-      loadProducts();
-    } catch (error) {
-      console.log(error);
-      Alert.alert('Failed');
-    }
+    loadProducts();
   };
 
   const deleteProduct = async (id: string) => {
-    try {
-      await fetch(
-        `http://172.20.10.4:5000/api/products/delete-product/${id}`,
-        {
-          method: 'DELETE',
-        }
-      );
+    await fetch(
+      `http://172.20.10.4:5000/api/products/delete-product/${id}`,
+      {
+        method: 'DELETE',
+      }
+    );
 
-      loadProducts();
-    } catch (error) {
-      console.log(error);
-    }
+    loadProducts();
   };
 
-  const editProduct = (item: any) => {
-    setName(item.name || '');
-    setPrice(String(item.price || ''));
-    setQuantity(item.quantity || '');
-    setImage(item.image || '');
-    setCategory(item.category || '');
+  const editProduct = (item: Product) => {
+    setName(item.name);
+    setPrice(String(item.price));
+    setQuantity(item.quantity);
+    setImage(item.image);
+    setCategory(item.category);
     setEditId(item._id || '');
   };
 
+  const handleLogout = async () => {
+    await AsyncStorage.multiRemove([
+      'token',
+      'user',
+      'deliveryUser',
+      'adminUser',
+    ]);
+
+    router.replace('/auth/login' as any);
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Admin Dashboard 🛠️</Text>
-
-      <TextInput
-        placeholder="Product name"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
+    <View style={styles.root}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#0f172a"
       />
 
-      <TextInput
-        placeholder="Price"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-        style={styles.input}
-      />
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>
+            Admin Dashboard
+          </Text>
+        </View>
 
-      <TextInput
-        placeholder="Quantity"
-        value={quantity}
-        onChangeText={setQuantity}
-        style={styles.input}
-      />
+        <View style={styles.headerRight}>
+          <Text style={styles.badge}>
+            {products.length} Items
+          </Text>
 
-      <TextInput
-        placeholder="Category"
-        value={category}
-        onChangeText={setCategory}
-        style={styles.input}
-      />
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutText}>
+              Logout
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      <TextInput
-        placeholder="Image URL"
-        value={image}
-        onChangeText={setImage}
-        style={styles.input}
-      />
+      <ScrollView style={{ padding: 20 }}>
+        <FormField
+          label="Product Name"
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+        />
 
-      <TouchableOpacity style={styles.btn} onPress={uploadProduct}>
-        <Text style={styles.text}>
-          {editId ? 'Update Product' : 'Upload Product'}
-        </Text>
-      </TouchableOpacity>
+        <FormField
+          label="Price"
+          placeholder="Price"
+          value={price}
+          onChangeText={setPrice}
+          keyboardType="numeric"
+        />
 
-      {products.length === 0 ? (
-        <Text style={styles.empty}>No products found</Text>
-      ) : (
-        products.map((item, index) => (
-          <View key={index} style={styles.productBox}>
-            <Text style={styles.name}>{item.name || 'No name'}</Text>
-            <Text>₹{item.price || 0}</Text>
-            <Text>{item.quantity || 'N/A'}</Text>
-            <Text>{item.category || 'N/A'}</Text>
+        <FormField
+          label="Quantity"
+          placeholder="Quantity"
+          value={quantity}
+          onChangeText={setQuantity}
+        />
 
-            <View style={styles.row}>
-              <TouchableOpacity onPress={() => editProduct(item)}>
-                <Text style={styles.edit}>Edit</Text>
-              </TouchableOpacity>
+        <FormField
+          label="Category"
+          placeholder="Category"
+          value={category}
+          onChangeText={setCategory}
+        />
 
-              <TouchableOpacity onPress={() => deleteProduct(item._id)}>
-                <Text style={styles.delete}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))
-      )}
-    </ScrollView>
+        <FormField
+          label="Image URL"
+          placeholder="Image"
+          value={image}
+          onChangeText={setImage}
+        />
+
+        <TouchableOpacity
+          style={styles.submitBtn}
+          onPress={uploadProduct}
+        >
+          <Text style={styles.submitText}>
+            {editId ? 'Update Product' : 'Upload Product'}
+          </Text>
+        </TouchableOpacity>
+
+        {products.map((item, index) => (
+          <ProductCard
+            key={item._id ?? index}
+            item={item}
+            onEdit={editProduct}
+            onDelete={deleteProduct}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8fafc',
   },
 
-  title: {
-    fontSize: 28,
+  header: {
+    backgroundColor: '#0f172a',
+    paddingTop: 56,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+
+  headerTitle: {
+    color: '#fff',
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 20,
   },
 
-  input: {
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 12,
+  headerRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+
+  badge: {
+    color: '#fff',
+  },
+
+  logoutBtn: {
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 10,
   },
 
-  btn: {
-    backgroundColor: '#16a34a',
+  logoutText: {
+    color: '#dc2626',
+    fontWeight: '700',
+  },
+
+  submitBtn: {
+    backgroundColor: '#4f46e5',
     padding: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 20,
   },
 
-  text: {
+  submitText: {
     color: '#fff',
     textAlign: 'center',
     fontWeight: '700',
   },
 
-  empty: {
-    textAlign: 'center',
-    marginTop: 30,
-    color: '#666',
+  card: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 14,
+    marginBottom: 14,
   },
 
-  productBox: {
-    borderWidth: 1,
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-
-  name: {
+  productName: {
     fontWeight: '700',
     fontSize: 16,
   },
 
-  row: {
+  actionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 12,
+    gap: 8,
   },
 
-  edit: {
-    color: 'blue',
-    fontWeight: '700',
+  editBtn: {
+    backgroundColor: '#eef2ff',
+    padding: 8,
+    borderRadius: 8,
   },
 
-  delete: {
-    color: 'red',
-    fontWeight: '700',
+  deleteBtn: {
+    backgroundColor: '#fff1f2',
+    padding: 8,
+    borderRadius: 8,
   },
 });

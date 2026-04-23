@@ -21,6 +21,17 @@ const orderSchema = new mongoose.Schema({
     default: '',
   },
 
+  userLocation: {
+    lat: {
+      type: Number,
+      default: 0,
+    },
+    lng: {
+      type: Number,
+      default: 0,
+    },
+  },
+
   status: {
     type: String,
     default: 'Preparing',
@@ -32,6 +43,11 @@ const orderSchema = new mongoose.Schema({
   },
 
   deliveryBoy: {
+    type: String,
+    default: '',
+  },
+
+  deliveryBoyId: {
     type: String,
     default: '',
   },
@@ -50,6 +66,16 @@ const orderSchema = new mongoose.Schema({
       type: Number,
       default: 0,
     },
+  },
+
+  accepted: {
+    type: Boolean,
+    default: false,
+  },
+
+  delivered: {
+    type: Boolean,
+    default: false,
   },
 
   createdAt: {
