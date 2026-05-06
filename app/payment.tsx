@@ -7,33 +7,90 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Linking from 'expo-linking';
+
 import { useCart } from '../src/context/CartContext';
 
 export default function PaymentScreen() {
   const { cart, checkout } = useCart();
+
   const params = useLocalSearchParams();
 
-  // ✅ RECEIVE ALL PARAMS (IMPORTANT FIX)
+  // LOCATION
   const lat = params.lat ? String(params.lat) : '';
   const lng = params.lng ? String(params.lng) : '';
-  const address = params.address ? String(params.address) : '';
+  const address = params.address
+    ? String(params.address)
+    : '';
 
-  // 🔥 THIS WAS MISSING
-  const name = params.name ? String(params.name) : '';
-  const phone = params.phone ? String(params.phone) : '';
-  const altPhone = params.altPhone ? String(params.altPhone) : '';
+  // USER INFO
+  const name = params.name
+    ? String(params.name)
+    : '';
 
-  const [method, setMethod] = useState('UPI');
-  const [loading, setLoading] = useState(false);
+  const phone = params.phone
+    ? String(params.phone)
+    : '';
 
+  const altPhone = params.altPhone
+    ? String(params.altPhone)
+    : '';
+
+  const [method, setMethod] =
+    useState('UPI');
+
+  const [loading, setLoading] =
+    useState(false);
+
+  // TOTAL
   const total =
     cart.reduce(
-      (sum, item) => sum + item.price * (item.qty || 1),
+      (sum, item) =>
+        sum +
+        item.price * (item.qty || 1),
       0
     ) + 35;
 
+  // 🔥 OPEN UPI APP
+  const openUPI = async () => {
+    try {
+      const upiUrl =
+        `upi://pay?pa=dasantu0118-2@oksbi` +
+        `&pn=Village Grocery` +
+        `&am=${total}` +
+        `&cu=INR`;
+
+      const supported =
+        await Linking.canOpenURL(
+          upiUrl
+        );
+
+      if (!supported) {
+        Alert.alert(
+          'No UPI app found'
+        );
+        return false;
+      }
+
+      await Linking.openURL(upiUrl);
+
+      return true;
+
+    } catch (error) {
+      console.log(error);
+
+      Alert.alert(
+        'Failed to open UPI app'
+      );
+
+      return false;
+    }
+  };
+
+  // 🔥 MAIN PAYMENT FUNCTION
   const handlePayment = async () => {
     try {
       if (cart.length === 0) {
@@ -42,33 +99,54 @@ export default function PaymentScreen() {
       }
 
       if (!lat || !lng) {
-        Alert.alert('Location missing');
+        Alert.alert(
+          'Location missing'
+        );
         return;
       }
 
       if (!name || !phone) {
-        Alert.alert('User details missing');
+        Alert.alert(
+          'User details missing'
+        );
         return;
+      }
+
+      // 🔥 OPEN UPI FIRST
+      if (method === 'UPI') {
+        const opened =
+          await openUPI();
+
+        if (!opened) return;
       }
 
       setLoading(true);
 
-      console.log("📥 RECEIVED:", { name, phone, altPhone });
-      console.log("📍 LOCATION:", lat, lng);
+      const userData =
+        await AsyncStorage.getItem(
+          'user'
+        );
 
-      const userData = await AsyncStorage.getItem('user');
-      const user = userData ? JSON.parse(userData) : null;
+      const user = userData
+        ? JSON.parse(userData)
+        : null;
 
       if (!user || !user._id) {
         Alert.alert('User not found');
         return;
       }
 
+      // ORDER PAYLOAD
       const payload = {
         userId: user._id,
+
         items: cart,
+
         total,
-        address: address || 'No address',
+
+        address:
+          address || 'No address',
+
         paymentMethod: method,
 
         userLocation: {
@@ -76,45 +154,69 @@ export default function PaymentScreen() {
           lng: Number(lng),
         },
 
-        // 🔥 MAIN FIX (THIS WAS MISSING)
         customerName: name,
+
         customerPhone: phone,
+
         customerAltPhone: altPhone,
       };
 
-      console.log("📤 SENDING TO BACKEND:", payload);
+      console.log(
+        '📤 SENDING:',
+        payload
+      );
 
       const res = await fetch(
         'http://172.20.10.3:5000/api/orders/place-order',
         {
           method: 'POST',
+
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':
+              'application/json',
           },
-          body: JSON.stringify(payload),
+
+          body: JSON.stringify(
+            payload
+          ),
         }
       );
 
       const data = await res.json();
 
-      console.log('📦 Order saved:', data);
+      console.log(
+        '📦 ORDER RESPONSE:',
+        data
+      );
 
       if (data.success) {
         checkout();
 
         Alert.alert(
           'Order Successful ✅',
-          `Payment via ${method}`
+          method === 'UPI'
+            ? 'UPI Payment Initiated'
+            : `Payment via ${method}`
         );
 
         router.replace('/orders');
+
       } else {
-        Alert.alert('Order failed');
+        Alert.alert(
+          'Order failed'
+        );
       }
 
     } catch (error) {
-      console.log('❌ Payment error:', error);
-      Alert.alert('Payment failed');
+      console.log(
+        '❌ PAYMENT ERROR:',
+        error
+      );
+
+      Alert.alert(
+        'Payment failed'
+      );
+
     } finally {
       setLoading(false);
     }
@@ -122,41 +224,79 @@ export default function PaymentScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Payment 💳</Text>
-
-      {/* 🔥 SHOW USER INFO */}
-      <Text style={styles.address}>👤 {name || 'No Name'}</Text>
-      <Text style={styles.address}>📞 {phone || 'No Phone'}</Text>
-      {altPhone ? (
-        <Text style={styles.address}>☎️ {altPhone}</Text>
-      ) : null}
-
-      <Text style={styles.address}>
-        📍 {address || 'No address selected'}
+      <Text style={styles.title}>
+        Payment 💳
       </Text>
 
-      <Text style={styles.amount}>₹{total}</Text>
+      {/* USER INFO */}
+      <Text style={styles.address}>
+        👤 {name || 'No Name'}
+      </Text>
 
-      {['UPI', 'Card', 'COD'].map((type) => (
-        <TouchableOpacity
-          key={type}
-          style={[
-            styles.option,
-            method === type && styles.active,
-          ]}
-          onPress={() => setMethod(type)}
-        >
-          <Text style={styles.optionText}>{type}</Text>
-        </TouchableOpacity>
-      ))}
+      <Text style={styles.address}>
+        📞 {phone || 'No Phone'}
+      </Text>
 
+      {altPhone ? (
+        <Text style={styles.address}>
+          ☎️ {altPhone}
+        </Text>
+      ) : null}
+
+      {/* ADDRESS */}
+      <Text style={styles.address}>
+        📍{' '}
+        {address ||
+          'No address selected'}
+      </Text>
+
+      {/* TOTAL */}
+      <Text style={styles.amount}>
+        ₹{total}
+      </Text>
+
+      {/* PAYMENT OPTIONS */}
+      {['UPI', 'Card', 'COD'].map(
+        (type) => (
+          <TouchableOpacity
+            key={type}
+            style={[
+              styles.option,
+              method === type &&
+                styles.active,
+            ]}
+            onPress={() =>
+              setMethod(type)
+            }
+          >
+            <Text
+              style={
+                styles.optionText
+              }
+            >
+              {type}
+            </Text>
+          </TouchableOpacity>
+        )
+      )}
+
+      {/* PAY BUTTON */}
       <TouchableOpacity
-        style={[styles.payBtn, loading && { opacity: 0.6 }]}
+        style={[
+          styles.payBtn,
+          loading && {
+            opacity: 0.6,
+          },
+        ]}
         onPress={handlePayment}
         disabled={loading}
       >
         <Text style={styles.payText}>
-          {loading ? 'Processing...' : `Pay ₹${total}`}
+          {loading
+            ? 'Processing...'
+            : method === 'UPI'
+            ? `Pay ₹${total} with UPI`
+            : `Place Order ₹${total}`}
         </Text>
       </TouchableOpacity>
     </View>
