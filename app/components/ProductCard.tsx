@@ -1,4 +1,4 @@
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../src/context/CartContext';
 import React, { useState } from 'react';
 import {
   View,

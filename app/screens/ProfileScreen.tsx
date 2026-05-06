@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../../src/context/CartContext';
 
 export default function ProfileScreen() {
   const [userName, setUserName] = useState('User');
@@ -50,7 +50,7 @@ export default function ProfileScreen() {
       );
 
       await fetch(
-        `http://172.20.10.4:5000/api/update-profile/${user._id}`,
+        `http://172.20.10.3:5000/api/update-profile/${user._id}`,
         {
           method: 'PUT',
           headers: {

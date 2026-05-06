@@ -1,30 +1,22 @@
-import React, { useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { useEffect } from 'react';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function Index() {
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
+    const timer = setTimeout(async () => {
+      const user = await AsyncStorage.getItem('user');
 
-        console.log('Token:', token);
-
-        setTimeout(() => {
-          if (token) {
-            router.replace('/(tabs)/home' as any);
-          } else {
-            router.replace('/auth/login' as any);
-          }
-        }, 500);
-      } catch (error) {
-        console.log('Auth error:', error);
+      if (user) {
+        router.replace('/(tabs)/home' as any);
+      } else {
         router.replace('/auth/login' as any);
       }
-    };
+    }, 300);
 
-    checkAuth();
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -35,7 +27,8 @@ export default function Index() {
         alignItems: 'center',
       }}
     >
-      <ActivityIndicator size="large" color="#16a34a" />
+      <ActivityIndicator size="large" />
     </View>
   );
 }
+

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View,
@@ -7,13 +8,25 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
-import { useCart } from './context/CartContext';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useCart } from '../src/context/CartContext';
 
 export default function PaymentScreen() {
   const { cart, checkout } = useCart();
+  const params = useLocalSearchParams();
+
+  // ✅ RECEIVE ALL PARAMS (IMPORTANT FIX)
+  const lat = params.lat ? String(params.lat) : '';
+  const lng = params.lng ? String(params.lng) : '';
+  const address = params.address ? String(params.address) : '';
+
+  // 🔥 THIS WAS MISSING
+  const name = params.name ? String(params.name) : '';
+  const phone = params.phone ? String(params.phone) : '';
+  const altPhone = params.altPhone ? String(params.altPhone) : '';
 
   const [method, setMethod] = useState('UPI');
+  const [loading, setLoading] = useState(false);
 
   const total =
     cart.reduce(
@@ -28,36 +41,63 @@ export default function PaymentScreen() {
         return;
       }
 
-      console.log('Payment clicked');
+      if (!lat || !lng) {
+        Alert.alert('Location missing');
+        return;
+      }
 
-      const user = JSON.parse(
-        (await AsyncStorage.getItem('user')) || '{}'
-      );
+      if (!name || !phone) {
+        Alert.alert('User details missing');
+        return;
+      }
 
-      console.log('User:', user);
+      setLoading(true);
 
-      const address = user.address || 'No address';
+      console.log("📥 RECEIVED:", { name, phone, altPhone });
+      console.log("📍 LOCATION:", lat, lng);
+
+      const userData = await AsyncStorage.getItem('user');
+      const user = userData ? JSON.parse(userData) : null;
+
+      if (!user || !user._id) {
+        Alert.alert('User not found');
+        return;
+      }
+
+      const payload = {
+        userId: user._id,
+        items: cart,
+        total,
+        address: address || 'No address',
+        paymentMethod: method,
+
+        userLocation: {
+          lat: Number(lat),
+          lng: Number(lng),
+        },
+
+        // 🔥 MAIN FIX (THIS WAS MISSING)
+        customerName: name,
+        customerPhone: phone,
+        customerAltPhone: altPhone,
+      };
+
+      console.log("📤 SENDING TO BACKEND:", payload);
 
       const res = await fetch(
-        'http://172.20.10.4:5000/api/orders/place-order',
+        'http://172.20.10.3:5000/api/orders/place-order',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            userId: user._id,
-            items: cart,
-            total,
-            address,
-            paymentMethod: method,
-          }),
+          body: JSON.stringify(payload),
         }
       );
 
       const data = await res.json();
 
-      console.log('Order saved:', data);
+      console.log('📦 Order saved:', data);
 
       if (data.success) {
         checkout();
@@ -67,16 +107,16 @@ export default function PaymentScreen() {
           `Payment via ${method}`
         );
 
-        setTimeout(() => {
-          router.push('/screens/OrdersScreen' as any);
-        }, 500);
+        router.replace('/orders');
       } else {
         Alert.alert('Order failed');
       }
 
     } catch (error) {
-      console.log('Payment error:', error);
+      console.log('❌ Payment error:', error);
       Alert.alert('Payment failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,43 +124,40 @@ export default function PaymentScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Payment 💳</Text>
 
+      {/* 🔥 SHOW USER INFO */}
+      <Text style={styles.address}>👤 {name || 'No Name'}</Text>
+      <Text style={styles.address}>📞 {phone || 'No Phone'}</Text>
+      {altPhone ? (
+        <Text style={styles.address}>☎️ {altPhone}</Text>
+      ) : null}
+
+      <Text style={styles.address}>
+        📍 {address || 'No address selected'}
+      </Text>
+
       <Text style={styles.amount}>₹{total}</Text>
 
-      <TouchableOpacity
-        style={[
-          styles.option,
-          method === 'UPI' && styles.active,
-        ]}
-        onPress={() => setMethod('UPI')}
-      >
-        <Text style={styles.optionText}>UPI</Text>
-      </TouchableOpacity>
+      {['UPI', 'Card', 'COD'].map((type) => (
+        <TouchableOpacity
+          key={type}
+          style={[
+            styles.option,
+            method === type && styles.active,
+          ]}
+          onPress={() => setMethod(type)}
+        >
+          <Text style={styles.optionText}>{type}</Text>
+        </TouchableOpacity>
+      ))}
 
       <TouchableOpacity
-        style={[
-          styles.option,
-          method === 'Card' && styles.active,
-        ]}
-        onPress={() => setMethod('Card')}
-      >
-        <Text style={styles.optionText}>Card</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[
-          styles.option,
-          method === 'COD' && styles.active,
-        ]}
-        onPress={() => setMethod('COD')}
-      >
-        <Text style={styles.optionText}>Cash on Delivery</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.payBtn}
+        style={[styles.payBtn, loading && { opacity: 0.6 }]}
         onPress={handlePayment}
+        disabled={loading}
       >
-        <Text style={styles.payText}>Pay ₹{total}</Text>
+        <Text style={styles.payText}>
+          {loading ? 'Processing...' : `Pay ₹${total}`}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -138,7 +175,14 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
+  },
+
+  address: {
+    textAlign: 'center',
+    marginBottom: 8,
+    fontSize: 14,
+    color: '#374151',
   },
 
   amount: {

@@ -1,82 +1,125 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, router } from 'expo-router';
+import { useCart } from '../../src/context/CartContext';
 
-export default function MapScreen() {
-  const [deliveryLocation, setDeliveryLocation] = useState({
-    latitude: 26.7305,
-    longitude: 88.4001,
-  });
+const STATUS_CONFIG: Record<string, any> = {
+  delivered: { bg: '#f0fdf4', text: '#15803d', dot: '#22c55e' },
+  pending: { bg: '#fffbeb', text: '#b45309', dot: '#f59e0b' },
+  processing: { bg: '#eff6ff', text: '#1d4ed8', dot: '#3b82f6' },
+  cancelled: { bg: '#fef2f2', text: '#dc2626', dot: '#ef4444' },
+  shipped: { bg: '#f0fdf4', text: '#0369a1', dot: '#0ea5e9' },
+};
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDeliveryLocation((prev) => ({
-        latitude: prev.latitude - 0.0005,
-        longitude: prev.longitude - 0.0005,
-      }));
-    }, 3000);
+const getStatusConfig = (status: string) => {
+  const key = status?.toLowerCase() || 'pending';
+  return STATUS_CONFIG[key] || STATUS_CONFIG['pending'];
+};
 
-    return () => clearInterval(interval);
-  }, []);
+export default function OrdersScreen() {
+  const [backendOrders, setBackendOrders] = useState<any[]>([]);
+  const { orders } = useCart();
+
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [])
+  );
+
+  const loadOrders = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+      if (!userData) return;
+
+      const user = JSON.parse(userData);
+
+      const res = await fetch(
+        `http://172.20.10.3:5000/api/orders/my-orders/${user._id}`
+      );
+
+      const data = await res.json();
+
+      setBackendOrders(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const finalOrders = [...backendOrders, ...orders];
 
   return (
-    <View style={styles.container}>
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 26.7271,
-          longitude: 88.3953,
-          latitudeDelta: 0.02,
-          longitudeDelta: 0.02,
-        }}
-      >
-        <Marker
-          coordinate={{
-            latitude: 26.7271,
-            longitude: 88.3953,
-          }}
-          title="Your Location"
-          description="Delivery address"
-        />
+    <View style={styles.root}>
+      <StatusBar barStyle="dark-content" />
 
-        <Marker
-          coordinate={deliveryLocation}
-          title="Delivery Boy"
-          description="Coming to you"
-        />
-      </MapView>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {finalOrders.map((order: any, index: number) => {
+          const cfg = getStatusConfig(order.status);
 
-      <View style={styles.infoBox}>
-        <Text style={styles.text}>
-          Delivery boy moving live 🚚
-        </Text>
-      </View>
+          return (
+            <View key={index} style={styles.orderCard}>
+
+              <Text style={styles.orderId}>
+                #{(order._id || '').slice(-6)}
+              </Text>
+
+              <Text>Status: {order.status}</Text>
+
+              {/* 🔥 TRACK BUTTON */}
+              {order.status === "Out for Delivery" && (
+                <TouchableOpacity
+                  style={styles.trackBtn}
+                  onPress={() =>
+                    router.push(`/orders/track?id=${order._id}`)
+                  }
+                >
+                  <Text style={styles.trackText}>Track Order 🚚</Text>
+                </TouchableOpacity>
+              )}
+
+            </View>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  root: { flex: 1 },
+
+  scrollContent: { padding: 20 },
+
+  orderCard: {
+    backgroundColor: "#fff",
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
   },
 
-  map: {
-    flex: 1,
+  orderId: {
+    fontWeight: "bold",
+    marginBottom: 5,
   },
 
-  infoBox: {
-    position: 'absolute',
-    bottom: 40,
-    left: 20,
-    right: 20,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 14,
-    elevation: 5,
+  trackBtn: {
+    marginTop: 10,
+    backgroundColor: "#1d4ed8",
+    padding: 10,
+    borderRadius: 8,
   },
 
-  text: {
-    fontWeight: '700',
-    textAlign: 'center',
+  trackText: {
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: "bold",
   },
 });

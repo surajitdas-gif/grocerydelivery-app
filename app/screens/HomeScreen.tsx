@@ -20,7 +20,7 @@ const { width } = Dimensions.get('window');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const BASE_URL = 'http://172.20.10.4:5000/api';
+const BASE_URL = 'http://172.20.10.3:5000/api';
 
 const BANNERS = [
   {
@@ -205,7 +205,13 @@ export default function HomeScreen() {
         {/* ── Track Delivery Card ── */}
         <TouchableOpacity
           style={styles.trackCard}
-          onPress={() => router.push('/screens/MapScreen' as any)}
+          onPress={() => {
+  if (latestOrder?._id) {
+    router.push(`/track?id=${latestOrder._id}`);
+  } else {
+    alert("No active order to track");
+  }
+}}
           activeOpacity={0.85}
         >
           <View style={styles.trackLeft}>
@@ -273,7 +279,7 @@ export default function HomeScreen() {
         {latestOrder && (
           <TouchableOpacity
             style={styles.orderCard}
-            onPress={() => router.push('/screens/OrdersScreen' as any)}
+            onPress={() => router.push('/screens/Orders' as any)}
             activeOpacity={0.85}
           >
             <View style={styles.orderLeft}>
