@@ -12,18 +12,24 @@ const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const productRoutes = require("./routes/productRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const cartRoutes = require('./routes/cart');
+const addressRoutes = require('./routes/address');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
 // MIDDLEWARE
 app.use(cors());
 app.use(express.json());
+app.use('/api/address',  addressRoutes);
+app.use( '/api/admin',adminRoutes);
 
 // ROUTES
 app.use("/api", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use('/api/cart',cartRoutes);
 
 // TEST ROUTE
 app.get("/", (req, res) => {

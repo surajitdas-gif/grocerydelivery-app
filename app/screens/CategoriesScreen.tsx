@@ -9,6 +9,8 @@ import {
   TextInput,
   Dimensions,
 } from 'react-native';
+
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
@@ -22,6 +24,7 @@ const categories = [
     tag: 'Farm Fresh',
     accent: '#166534',
     bg: '#052e16',
+    homeCategory: 'Vegetables',
   },
   {
     name: 'Fruits',
@@ -30,6 +33,7 @@ const categories = [
     tag: 'Seasonal',
     accent: '#fb923c',
     bg: '#431407',
+    homeCategory: 'Fruits',
   },
   {
     name: 'Milk & Dairy',
@@ -38,6 +42,7 @@ const categories = [
     tag: 'Daily Fresh',
     accent: '#60a5fa',
     bg: '#172554',
+    homeCategory: 'Milk',
   },
   {
     name: 'Eggs',
@@ -46,6 +51,7 @@ const categories = [
     tag: 'Farm Sourced',
     accent: '#f472b6',
     bg: '#500724',
+    homeCategory: 'All',
   },
   {
     name: 'Grains',
@@ -54,6 +60,7 @@ const categories = [
     tag: 'Organic',
     accent: '#c084fc',
     bg: '#3b0764',
+    homeCategory: 'All',
   },
   {
     name: 'Beverages',
@@ -62,6 +69,7 @@ const categories = [
     tag: 'Refreshing',
     accent: '#34d399',
     bg: '#022c22',
+    homeCategory: 'All',
   },
   {
     name: 'Snacks',
@@ -70,6 +78,7 @@ const categories = [
     tag: 'Tasty Bites',
     accent: '#fbbf24',
     bg: '#451a03',
+    homeCategory: 'All',
   },
   {
     name: 'Cleaning',
@@ -78,6 +87,7 @@ const categories = [
     tag: 'Home Care',
     accent: '#22d3ee',
     bg: '#083344',
+    homeCategory: 'Beauty',
   },
 ];
 
@@ -89,17 +99,22 @@ export default function CategoriesScreen() {
   );
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView style={styles.root}>
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backIcon}>‹</Text>
         </TouchableOpacity>
 
         <View>
           <Text style={styles.topTitle}>Categories</Text>
-          <Text style={styles.topSub}>{categories.length} sections</Text>
+          <Text style={styles.topSub}>
+            {categories.length} sections
+          </Text>
         </View>
 
         <View style={styles.topRight}>
@@ -107,7 +122,10 @@ export default function CategoriesScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.searchBar}>
           <Text style={styles.searchIcon}>🔍</Text>
 
@@ -129,13 +147,17 @@ export default function CategoriesScreen() {
         <TouchableOpacity style={styles.featuredCard}>
           <View style={styles.featuredLeft}>
             <View style={styles.featuredTag}>
-              <Text style={styles.featuredTagText}>ALL CATEGORIES</Text>
+              <Text style={styles.featuredTagText}>
+                ALL CATEGORIES
+              </Text>
             </View>
 
-            <Text style={styles.featuredTitle}>Browse Everything Fresh</Text>
+            <Text style={styles.featuredTitle}>
+              Browse Everything Fresh
+            </Text>
 
             <Text style={styles.featuredSub}>
-              {categories.length} sections · {categories.reduce((sum, item) => sum + item.count, 0)}+ products
+              {categories.length} sections
             </Text>
           </View>
 
@@ -143,34 +165,72 @@ export default function CategoriesScreen() {
         </TouchableOpacity>
 
         <Text style={styles.sectionLabel}>
-          {filtered.length} result{filtered.length !== 1 ? 's' : ''}
+          {filtered.length} results
         </Text>
 
         <View style={styles.grid}>
           {filtered.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={[styles.catCard, { backgroundColor: item.bg }]}
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: '/',
+                  params: {
+                    category: item.homeCategory,
+                  },
+                })
+              }
+              style={[
+                styles.catCard,
+                { backgroundColor: item.bg },
+              ]}
             >
               <View
                 style={[
                   styles.catTag,
-                  { backgroundColor: item.accent + '22' },
+                  {
+                    backgroundColor:
+                      item.accent + '22',
+                  },
                 ]}
               >
-                <Text style={[styles.catTagText, { color: item.accent }]}>
+                <Text
+                  style={[
+                    styles.catTagText,
+                    { color: item.accent },
+                  ]}
+                >
                   {item.tag}
                 </Text>
               </View>
 
-              <Text style={styles.catEmoji}>{item.emoji}</Text>
-              <Text style={styles.catName}>{item.name}</Text>
+              <Text style={styles.catEmoji}>
+                {item.emoji}
+              </Text>
+
+              <Text style={styles.catName}>
+                {item.name}
+              </Text>
 
               <View style={styles.catCountRow}>
-                <Text style={[styles.catCount, { color: item.accent }]}>
+                <Text
+                  style={[
+                    styles.catCount,
+                    { color: item.accent },
+                  ]}
+                >
                   {item.count} items
                 </Text>
-                <Text style={[styles.catArrow, { color: item.accent }]}>→</Text>
+
+                <Text
+                  style={[
+                    styles.catArrow,
+                    { color: item.accent },
+                  ]}
+                >
+                  →
+                </Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -178,7 +238,7 @@ export default function CategoriesScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -193,7 +253,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 18,
-    paddingTop: 54,
+    paddingTop: 10,
     paddingBottom: 14,
     backgroundColor: '#fff',
   },
@@ -248,6 +308,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    height: 50,
   },
 
   searchIcon: {
@@ -256,7 +317,6 @@ const styles = StyleSheet.create({
 
   searchInput: {
     flex: 1,
-    height: 46,
     marginLeft: 8,
   },
 

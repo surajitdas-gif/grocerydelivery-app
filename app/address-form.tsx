@@ -1,207 +1,340 @@
-// import React, { useEffect, useState } from "react";
-// import {
-//   View,
-//   Text,
-//   TextInput,
-//   StyleSheet,
-//   TouchableOpacity,
-//   Alert,
-// } from "react-native";
-// import { useLocalSearchParams, router } from "expo-router";
-
-// export default function AddressForm() {
-//   const { lat, lng } = useLocalSearchParams();
-
-//   const [building, setBuilding] = useState("");
-//   const [area, setArea] = useState("");
-//   const [fullAddress, setFullAddress] = useState("");
-
-//   useEffect(() => {
-//     // 🔥 AUTO ADDRESS (simple for now)
-//     if (lat && lng) {
-//       setFullAddress(`Lat: ${lat}, Lng: ${lng}`);
-//     }
-//   }, [lat, lng]);
-
-  
-// const handleContinue = () => {
-//   if (!building || !area) {
-//     Alert.alert("Please fill all fields");
-//     return;
-//   }
-
-//   const finalAddress = `${building}, ${area}`;
-
-//   console.log("📤 SENDING:", finalAddress);
-
-//   router.push({
-//     pathname: "/payment",
-//     params: {
-//       lat: String(lat),        // ✅ FIX
-//       lng: String(lng),        // ✅ FIX
-//       address: String(finalAddress), // ✅ SAFE
-//     },
-//   });
-// };
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>Confirm Address</Text>
-
-//       <Text style={styles.label}>Auto Location</Text>
-//       <Text style={styles.auto}>{fullAddress}</Text>
-
-//       <Text style={styles.label}>Building / House</Text>
-//       <TextInput
-//         style={styles.input}
-//         placeholder="e.g. Flat 201, Green Residency"
-//         value={building}
-//         onChangeText={setBuilding}
-//       />
-
-//       <Text style={styles.label}>Area / Landmark</Text>
-//       <TextInput
-//         style={styles.input}
-//         placeholder="e.g. Near School / Market"
-//         value={area}
-//         onChangeText={setArea}
-//       />
-
-//       <TouchableOpacity style={styles.btn} onPress={handleContinue}>
-//         <Text style={styles.btnText}>Continue to Payment →</Text>
-//       </TouchableOpacity>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 20,
-//     backgroundColor: "#fff",
-//   },
-
-//   title: {
-//     fontSize: 22,
-//     fontWeight: "800",
-//     marginBottom: 20,
-//   },
-
-//   label: {
-//     fontSize: 14,
-//     fontWeight: "600",
-//     marginTop: 10,
-//   },
-
-//   auto: {
-//     backgroundColor: "#f3f4f6",
-//     padding: 10,
-//     borderRadius: 8,
-//     marginTop: 5,
-//   },
-
-//   input: {
-//     borderWidth: 1,
-//     borderColor: "#ddd",
-//     padding: 12,
-//     borderRadius: 10,
-//     marginTop: 5,
-//   },
-
-//   btn: {
-//     marginTop: 30,
-//     backgroundColor: "#16a34a",
-//     padding: 16,
-//     borderRadius: 12,
-//     alignItems: "center",
-//   },
-
-//   btnText: {
-//     color: "#fff",
-//     fontWeight: "700",
-//   },
-// });
-
-
-
-
-
-
-import React, { useEffect, useState } from "react";
 import {
-  View,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
+
+import {
+  router,
+  useLocalSearchParams,
+} from "expo-router";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const API_URL =
+  "http://172.20.10.3:5000";
 
 export default function AddressForm() {
-  const params = useLocalSearchParams();
 
-  // ✅ normalize params
-  const lat = params.lat ? String(params.lat) : "";
-  const lng = params.lng ? String(params.lng) : "";
+  const params =
+    useLocalSearchParams();
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [altPhone, setAltPhone] = useState("");
-  const [building, setBuilding] = useState("");
-  const [area, setArea] = useState("");
-  const [fullAddress, setFullAddress] = useState("");
+  // ============================================
+  // PARAMS
+  // ============================================
+
+  const lat =
+    params.lat
+      ? String(params.lat)
+      : "";
+
+  const lng =
+    params.lng
+      ? String(params.lng)
+      : "";
+
+  // ============================================
+  // STATES
+  // ============================================
+
+  const [userId, setUserId] =
+    useState("");
+
+  const [name, setName] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [altPhone, setAltPhone] =
+    useState("");
+
+  const [building, setBuilding] =
+    useState("");
+
+  const [area, setArea] =
+    useState("");
+
+  const [fullAddress, setFullAddress] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(true);
+
+  // ============================================
+  // LOAD SAVED ADDRESS
+  // ============================================
 
   useEffect(() => {
-    if (lat && lng) {
-      setFullAddress(`Lat: ${lat}, Lng: ${lng}`);
-    } else {
-      setFullAddress("Location not found");
-    }
-  }, [lat, lng]);
-const handleContinue = () => {
-  if (!name || !phone || !building || !area) {
-    Alert.alert("Please fill all required fields");
-    return;
+
+    loadSavedAddress();
+
+  }, []);
+
+  const loadSavedAddress =
+    async () => {
+
+      try {
+
+        const userData =
+          await AsyncStorage.getItem(
+            "user"
+          );
+
+        if (!userData) {
+
+          setLoading(false);
+          return;
+        }
+
+        const parsed =
+          JSON.parse(userData);
+
+        const uid =
+          parsed._id;
+
+        setUserId(uid);
+
+        // LOAD SAVED ADDRESS
+
+        const res =
+          await fetch(
+            `${API_URL}/api/address/${uid}`
+          );
+
+        const data =
+          await res.json();
+
+        console.log(
+          "📦 SAVED ADDRESS:",
+          data
+        );
+
+        // AUTO FILL
+
+        if (data) {
+
+          setName(
+            data.name || ""
+          );
+
+          setPhone(
+            data.phone || ""
+          );
+
+          setAltPhone(
+            data.altPhone || ""
+          );
+
+          const parts =
+            data.address
+              ? data.address.split(",")
+              : [];
+
+          setBuilding(
+            parts[0]?.trim() || ""
+          );
+
+          setArea(
+            parts[1]?.trim() || ""
+          );
+        }
+
+        // CURRENT LOCATION TEXT
+
+        if (lat && lng) {
+
+          setFullAddress(
+            `Lat: ${lat}, Lng: ${lng}`
+          );
+        }
+
+      } catch (error) {
+
+        console.log(
+          "Address load error:",
+          error
+        );
+      }
+
+      setLoading(false);
+    };
+
+  // ============================================
+  // CONTINUE
+  // ============================================
+
+  const handleContinue =
+    async () => {
+
+      if (
+        !name ||
+        !phone ||
+        !building ||
+        !area
+      ) {
+
+        Alert.alert(
+          "Please fill all required fields"
+        );
+
+        return;
+      }
+
+      if (phone.length < 10) {
+
+        Alert.alert(
+          "Invalid phone number"
+        );
+
+        return;
+      }
+
+      const finalAddress =
+        `${building}, ${area}`;
+
+      try {
+
+        // ========================================
+        // SAVE ADDRESS TO BACKEND
+        // ========================================
+
+        await fetch(
+          `${API_URL}/api/address/save`,
+          {
+
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+
+              userId,
+
+              name,
+
+              phone,
+
+              altPhone,
+
+              address:
+                finalAddress,
+
+              lat,
+
+              lng,
+            }),
+          }
+        );
+
+        console.log(
+          "📤 ADDRESS SAVED"
+        );
+
+        // ========================================
+        // GO TO PAYMENT
+        // ========================================
+
+        router.replace({
+
+          pathname:
+            "/payment",
+
+          params: {
+
+            lat:
+              String(lat),
+
+            lng:
+              String(lng),
+
+            address:
+              finalAddress,
+
+            name,
+
+            phone,
+
+            altPhone:
+              altPhone || "",
+          },
+        });
+
+      } catch (error) {
+
+        console.log(
+          "Address save error:",
+          error
+        );
+
+        Alert.alert(
+          "Address save failed"
+        );
+      }
+    };
+
+  // ============================================
+  // LOADING
+  // ============================================
+
+  if (loading) {
+
+    return (
+
+      <View
+        style={styles.loader}
+      >
+
+        <Text>
+          Loading address...
+        </Text>
+
+      </View>
+    );
   }
 
-  if (phone.length < 10) {
-    Alert.alert("Invalid phone number");
-    return;
-  }
-
-  const finalAddress = `${building}, ${area}`;
-
-  console.log("📤 ADDRESS → PAYMENT:", {
-    name,
-    phone,
-    altPhone,
-    lat,
-    lng,
-    finalAddress,
-  });
-
-  // ✅ IMPORTANT: use replace + pass ALL params
-  router.replace({
-    pathname: "/payment",
-    params: {
-      lat: String(lat),
-      lng: String(lng),
-      address: finalAddress,
-      name,
-      phone,
-      altPhone: altPhone || "",
-    },
-  });
-};
+  // ============================================
+  // UI
+  // ============================================
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Confirm Address</Text>
 
-      <Text style={styles.label}>Auto Location</Text>
-      <Text style={styles.auto}>{fullAddress}</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{
+        paddingBottom: 40,
+      }}
+      showsVerticalScrollIndicator={false}
+    >
 
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.title}>
+        Confirm Address
+      </Text>
+
+      <Text style={styles.label}>
+        Auto Location
+      </Text>
+
+      <Text style={styles.auto}>
+        {fullAddress}
+      </Text>
+
+      <Text style={styles.label}>
+        Name
+      </Text>
+
       <TextInput
         style={styles.input}
         placeholder="Your name"
@@ -209,7 +342,10 @@ const handleContinue = () => {
         onChangeText={setName}
       />
 
-      <Text style={styles.label}>Phone Number</Text>
+      <Text style={styles.label}>
+        Phone Number
+      </Text>
+
       <TextInput
         style={styles.input}
         placeholder="Primary phone"
@@ -218,7 +354,10 @@ const handleContinue = () => {
         keyboardType="phone-pad"
       />
 
-      <Text style={styles.label}>Alternate Phone (Optional)</Text>
+      <Text style={styles.label}>
+        Alternate Phone
+      </Text>
+
       <TextInput
         style={styles.input}
         placeholder="Optional"
@@ -227,77 +366,100 @@ const handleContinue = () => {
         keyboardType="phone-pad"
       />
 
-      <Text style={styles.label}>Building / House</Text>
+      <Text style={styles.label}>
+        Building / House
+      </Text>
+
       <TextInput
         style={styles.input}
-        placeholder="Flat 201, Green Residency"
+        placeholder="Flat 201"
         value={building}
         onChangeText={setBuilding}
       />
 
-      <Text style={styles.label}>Area / Landmark</Text>
+      <Text style={styles.label}>
+        Area / Landmark
+      </Text>
+
       <TextInput
         style={styles.input}
-        placeholder="Near School / Market"
+        placeholder="Near market"
         value={area}
         onChangeText={setArea}
       />
 
-      <TouchableOpacity style={styles.btn} onPress={handleContinue}>
-        <Text style={styles.btnText}>Continue to Payment →</Text>
+      <TouchableOpacity
+        style={styles.btn}
+        onPress={handleContinue}
+      >
+
+        <Text style={styles.btnText}>
+          Continue to Payment →
+        </Text>
+
       </TouchableOpacity>
-    </View>
+
+    </ScrollView>
   );
 }
 
-/* ✅ STYLES AFTER COMPONENT (SAFE) */
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
-  },
+const styles =
+  StyleSheet.create({
 
-  title: {
-    fontSize: 22,
-    fontWeight: "800",
-    marginBottom: 20,
-  },
+    container: {
+      flex: 1,
+      backgroundColor: "#fff",
+      padding: 20,
+    },
 
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 10,
-  },
+    loader: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
 
-  auto: {
-    backgroundColor: "#f3f4f6",
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 5,
-  },
+    title: {
+      fontSize: 24,
+      fontWeight: "800",
+      marginBottom: 20,
+      color: "#111827",
+    },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 5,
-  },
+    label: {
+      fontSize: 14,
+      fontWeight: "700",
+      marginTop: 16,
+      marginBottom: 6,
+      color: "#374151",
+    },
 
-  btn: {
-    marginTop: 30,
-    backgroundColor: "#16a34a",
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
+    auto: {
+      backgroundColor: "#f3f4f6",
+      padding: 14,
+      borderRadius: 12,
+      color: "#111827",
+    },
 
-  btnText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
-});
+    input: {
+      borderWidth: 1,
+      borderColor: "#d1d5db",
+      padding: 14,
+      borderRadius: 12,
+      fontSize: 14,
+      backgroundColor: "#fff",
+    },
 
+    btn: {
+      marginTop: 30,
+      backgroundColor: "#16a34a",
+      padding: 18,
+      borderRadius: 14,
+      alignItems: "center",
+    },
 
-
+    btnText: {
+      color: "#fff",
+      fontWeight: "800",
+      fontSize: 15,
+    },
+  });
