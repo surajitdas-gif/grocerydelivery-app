@@ -1,39 +1,38 @@
 
 
-import React, {
+import {
   useEffect,
-  useState,
   useRef,
-  useCallback,
+  useState
 } from 'react';
 
 import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
   Animated,
   Easing,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import MapView, {
-  Marker,
   AnimatedRegion,
+  Marker,
   Polyline,
 } from 'react-native-maps';
 
 import MapViewDirections from 'react-native-maps-directions';
 
 import {
-  useLocalSearchParams,
   router,
+  useLocalSearchParams,
 } from 'expo-router';
 
 import Svg, {
-  Path,
   Circle,
   Ellipse,
+  Path,
 } from 'react-native-svg';
 
 import { socket } from "@/socket";
@@ -196,7 +195,7 @@ function AnimatedBikeMarker({
   return (
 
     <Marker.Animated
-  coordinate={coordinate as any}
+      coordinate={coordinate as any}
       anchor={{
         x: 0.5,
         y: 0.5,
@@ -292,10 +291,10 @@ function getBearing(
 
   const x =
     Math.cos(lat1) *
-      Math.sin(lat2) -
+    Math.sin(lat2) -
     Math.sin(lat1) *
-      Math.cos(lat2) *
-      Math.cos(dLng);
+    Math.cos(lat2) *
+    Math.cos(dLng);
 
   return (
     toDeg(Math.atan2(y, x)) + 360
@@ -313,9 +312,9 @@ export default function TrackOrder() {
     useLocalSearchParams();
 
   const orderId =
-    params.id
-      ? String(params.id)
-      : "";
+    params?.id
+      ? String(params.id).trim()
+      : '';
 
   const mapRef =
     useRef<any>(null);
@@ -325,9 +324,17 @@ export default function TrackOrder() {
 
   const [status, setStatus] =
     useState("Preparing");
-    const isTrackingActive =
-  status !== "Delivered" &&
-  status !== "Cancelled";
+
+  const normalizedStatus =
+    status
+      ?.toLowerCase()
+      ?.trim();
+
+  const isTrackingActive =
+    normalizedStatus !==
+    "delivered" &&
+    normalizedStatus !==
+    "cancelled";
 
   const [distance, setDistance] =
     useState(0);
@@ -383,20 +390,20 @@ export default function TrackOrder() {
   // ======================================================
 
   const animateMarker = (
-  lat: number,
-  lng: number
-) => {
+    lat: number,
+    lng: number
+  ) => {
 
-  animatedCoordinate.timing({
-    latitude: lat,
-    longitude: lng,
-    latitudeDelta: 0,
-    longitudeDelta: 0,
-    duration: 3000,
-    useNativeDriver: false,
-  } as any).start();
+    animatedCoordinate.timing({
+      latitude: lat,
+      longitude: lng,
+      latitudeDelta: 0,
+      longitudeDelta: 0,
+      duration: 3000,
+      useNativeDriver: false,
+    } as any).start();
 
-};
+  };
 
   // ======================================================
   // LOAD ORDER
@@ -447,7 +454,12 @@ export default function TrackOrder() {
         }
 
         // DELIVERY
-        if (data?.deliveryLocation) {
+        // DELIVERY
+        if (
+          data?.deliveryLocation &&
+          data.deliveryLocation.lat &&
+          data.deliveryLocation.lng
+        ) {
 
           dLat =
             Number(data.deliveryLocation.lat);
@@ -455,25 +467,34 @@ export default function TrackOrder() {
           dLng =
             Number(data.deliveryLocation.lng);
 
-          setDeliveryLocation({
-            lat: dLat,
-            lng: dLng,
-          });
+          if (
+            dLat !== 0 &&
+            dLng !== 0
+          ) {
 
-          prevLocationRef.current = {
-            lat: dLat,
-            lng: dLng,
-          };
+            setDeliveryLocation({
+              lat: dLat,
+              lng: dLng,
+            });
 
-          animateMarker(dLat, dLng);
+            prevLocationRef.current = {
+              lat: dLat,
+              lng: dLng,
+            };
 
-          setHistory([
-            {
-              latitude: dLat,
-              longitude: dLng,
-            },
-          ]);
+            animateMarker(dLat, dLng);
+
+            setHistory([
+              {
+                latitude: dLat,
+                longitude: dLng,
+              },
+            ]);
+
+          }
+
         }
+
 
         // STATUS
         if (data?.status) {
@@ -632,7 +653,9 @@ export default function TrackOrder() {
 
         if (order?._id === orderId) {
 
-          setStatus(order.status);
+          setStatus(
+            order?.status || 'Preparing'
+          );
         }
       };
 
@@ -717,191 +740,197 @@ export default function TrackOrder() {
 
       {/* MAP */}
 
-    
-{isTrackingActive ? (
 
-<MapView
-  ref={mapRef}
-  style={styles.map}
-  showsTraffic={true}
-  showsCompass={true}
-  initialRegion={{
-    latitude: userLocation.lat,
-    longitude: userLocation.lng,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }}
->
+      {isTrackingActive ? (
 
-  {/* USER */}
+        <MapView
+          ref={mapRef}
+          style={styles.map}
+          showsTraffic={true}
+          showsCompass={true}
+          initialRegion={{
+            latitude: userLocation.lat,
+            longitude: userLocation.lng,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+        >
 
-  <Marker
-    coordinate={{
-      latitude: userLocation.lat,
-      longitude: userLocation.lng,
-    }}
-  >
+          {/* USER */}
 
-    <View style={styles.homeMarker}>
+          <Marker
+            coordinate={{
+              latitude: userLocation.lat,
+              longitude: userLocation.lng,
+            }}
+          >
 
-      <Text style={{
-        fontSize: 22,
-      }}>
-        🏠
-      </Text>
+            <View style={styles.homeMarker}>
 
-    </View>
+              <Text style={{
+                fontSize: 22,
+              }}>
+                🏠
+              </Text>
 
-  </Marker>
+            </View>
 
-  {/* BIKE */}
+          </Marker>
 
-  <AnimatedBikeMarker
-    coordinate={animatedCoordinate}
-    heading={heading}
-  />
+          {/* BIKE */}
 
-  {/* HISTORY LINE */}
+          <AnimatedBikeMarker
+            coordinate={animatedCoordinate}
+            heading={heading}
+          />
 
-  {history.length > 1 && (
+          {/* HISTORY LINE */}
 
-    <Polyline
-      coordinates={history}
-      strokeColor="#86efac"
-      strokeWidth={4}
-    />
+          {history.length > 1 && (
 
-  )}
+            <Polyline
+              coordinates={history}
+              strokeColor="#86efac"
+              strokeWidth={4}
+            />
 
-  {/* LIVE ROUTE */}
+          )}
 
-  {deliveryLocation.lat !== 0 &&
-    deliveryLocation.lng !== 0 && (
+          {/* LIVE ROUTE */}
 
-    <MapViewDirections
+          {deliveryLocation &&
+            deliveryLocation.lat &&
+            deliveryLocation.lng &&
+            deliveryLocation.lat !== 0 &&
+            deliveryLocation.lng !== 0 && (
 
-      key={routeKey}
+              <MapViewDirections
 
-      origin={{
-        latitude:
-          deliveryLocation.lat,
-        longitude:
-          deliveryLocation.lng,
-      }}
+                key={routeKey}
 
-      destination={{
-        latitude:
-          userLocation.lat,
-        longitude:
-          userLocation.lng,
-      }}
+                origin={{
+                  latitude:
+                    deliveryLocation.lat,
+                  longitude:
+                    deliveryLocation.lng,
+                }}
 
-      apikey={
-        GOOGLE_MAPS_APIKEY
-      }
+                destination={{
+                  latitude:
+                    userLocation.lat,
+                  longitude:
+                    userLocation.lng,
+                }}
 
-      mode="DRIVING"
+                apikey={
+                  GOOGLE_MAPS_APIKEY
+                }
 
-      precision="high"
+                mode="DRIVING"
 
-      strokeWidth={6}
+                precision="high"
 
-      strokeColor="#16a34a"
+                strokeWidth={6}
 
-      optimizeWaypoints={false}
+                strokeColor="#16a34a"
 
-      resetOnChange={false}
+                optimizeWaypoints={false}
 
-      onReady={(result) => {
+                resetOnChange={false}
 
-        setDistance(
-          result.distance
-        );
+                onReady={(result) => {
 
-        setEta(
-          result.duration
-        );
-      }}
+                  setDistance(
+                    result.distance
+                  );
 
-      onError={(err) => {
+                  setEta(
+                    result.duration
+                  );
+                }}
 
-        console.log(
-          "❌ ROUTE ERROR:",
-          err
-        );
-      }}
+                onError={(err) => {
 
-    />
-  )}
+                  console.log(
+                    "❌ ROUTE ERROR:",
+                    err
+                  );
+                }}
 
-</MapView>
+              />
+            )}
 
-) : (
+        </MapView>
 
-<View style={styles.deliveredContainer}>
+      ) : (
 
-  <View style={styles.deliveredCard}>
+        <View style={styles.deliveredContainer}>
 
-    <Text style={styles.deliveredEmoji}>
-      ✅
-    </Text>
+          <View style={styles.deliveredCard}>
 
-    <Text style={styles.deliveredTitle}>
-      Order Delivered
-    </Text>
+            <Text style={styles.deliveredEmoji}>
+              ✅
+            </Text>
 
-    <Text style={styles.deliveredSub}>
-      Your order has been delivered successfully
-    </Text>
+            <Text style={styles.deliveredTitle}>
+              Order Delivered
+            </Text>
 
-    <TouchableOpacity
-      style={styles.homeBtn}
-      onPress={() => router.push('/')}
-    >
+            <Text style={styles.deliveredSub}>
+              Your order has been delivered successfully
+            </Text>
 
-      <Text style={styles.homeBtnText}>
-        Back To Home
-      </Text>
+            <TouchableOpacity
+              style={styles.homeBtn}
+              onPress={() => router.push('/')}
+            >
 
-    </TouchableOpacity>
+              <Text style={styles.homeBtnText}>
+                Back To Home
+              </Text>
 
-  </View>
+            </TouchableOpacity>
 
-</View>
+          </View>
 
-)}
+        </View>
+
+      )}
 
       {/* BOTTOM CARD */}
 
-      <View style={styles.bottomCard}>
+      {isTrackingActive && (
 
-        <Text style={styles.arrivalText}>
+        <View style={styles.bottomCard}>
 
-          {eta < 1
-            ? "🏍️ Rider Arrived"
-            : `🏍️ ${Math.round(eta)} mins away`}
+          <Text style={styles.arrivalText}>
 
-        </Text>
+            {eta < 1
+              ? "🏍️ Rider Arrived"
+              : `🏍️ ${Math.round(eta)} mins away`}
 
-        <Text style={styles.distanceText}>
+          </Text>
 
-          {distance < 1
-            ? `${Math.round(distance * 1000)} meters`
-            : `${distance.toFixed(1)} km`} away
+          <Text style={styles.distanceText}>
 
-        </Text>
+            {distance < 1
+              ? `${Math.round(distance * 1000)} meters`
+              : `${distance.toFixed(1)} km`} away
 
-        <View style={styles.divider} />
+          </Text>
 
-        <Text style={styles.statusLabel}>
-          ORDER STATUS
-        </Text>
+          <View style={styles.divider} />
 
-        <Text style={styles.statusText}>
-          {status}
-        </Text>
+          <Text style={styles.statusLabel}>
+            ORDER STATUS
+          </Text>
+          <Text style={styles.statusText}>
+            {status || 'Preparing'}
+          </Text>
 
-      </View>
+        </View>
+
+      )}
 
     </View>
   );

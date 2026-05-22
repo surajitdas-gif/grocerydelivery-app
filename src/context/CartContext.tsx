@@ -1,3 +1,4 @@
+
 import {
   createContext,
   ReactNode,
@@ -268,33 +269,33 @@ export const CartProvider = ({
   // =====================================================
 
   const decreaseQty = (
-    name: string
-  ) => {
+  name: string
+) => {
 
-    setCart((prev) =>
+  setCart((prev) =>
 
-      prev
+    prev
+      .map((item) => {
 
-        .map((item) =>
+        if (item.name === name) {
 
-          item.name === name
+          return {
+            ...item,
 
-            ? {
-                ...item,
+            qty:
+              (item.qty ?? 1) - 1,
+          };
+        }
 
-                qty:
-                  (item.qty || 1) - 1,
-              }
+        return item;
+      })
 
-            : item
-        )
-
-        .filter(
-          (item) =>
-            (item.qty || 1) > 0
-        )
-    );
-  };
+      .filter(
+        (item) =>
+          (item.qty ?? 1) > 0
+      )
+  );
+};
 
   // =====================================================
   // CHECKOUT

@@ -1,16 +1,16 @@
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  View,
+  Alert,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Alert,
+  View,
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router, useLocalSearchParams } from 'expo-router';
 import * as Linking from 'expo-linking';
+import { router, useLocalSearchParams } from 'expo-router';
 
 import { useCart } from '../src/context/CartContext';
 
@@ -46,13 +46,24 @@ export default function PaymentScreen() {
     useState(false);
 
   // TOTAL
-  const total =
+  const subtotal =
     cart.reduce(
       (sum, item) =>
         sum +
-        item.price * (item.qty || 1),
+        item.price *
+        (item.qty || 1),
       0
-    ) + 35;
+    );
+
+  const deliveryFee =
+    subtotal < 500 ? 13 : 0;
+
+  const platformFee = 2;
+
+  const total =
+    subtotal +
+    deliveryFee +
+    platformFee;
 
   // 🔥 OPEN UPI APP
   const openUPI = async () => {
@@ -90,6 +101,106 @@ export default function PaymentScreen() {
     }
   };
 
+  const createOrder = async () => {
+
+    try {
+
+      setLoading(true);
+
+      const userData =
+        await AsyncStorage.getItem(
+          'user'
+        );
+
+      const user = userData
+        ? JSON.parse(userData)
+        : null;
+
+      if (!user || !user._id) {
+        Alert.alert('User not found');
+        return;
+      }
+
+      const payload = {
+        userId: user._id,
+
+        items: cart,
+
+        total,
+
+        address:
+          address || 'No address',
+
+        paymentMethod: method,
+        paymentReceived:
+          method === 'COD'
+            ? false
+            : true,
+
+        userLocation: {
+          lat: Number(lat),
+          lng: Number(lng),
+        },
+
+        customerName: name,
+
+        customerPhone: phone,
+
+        customerAltPhone: altPhone,
+      };
+
+      const res = await fetch(
+        'http://172.20.10.3:5000/api/orders/place-order',
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json',
+          },
+
+          body: JSON.stringify(
+            payload
+          ),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+
+        checkout();
+
+        Alert.alert(
+          'Order Successful ✅'
+        );
+
+        router.replace('/orders');
+
+      } else {
+
+        Alert.alert(
+          'Order failed'
+        );
+
+      }
+
+    } catch (error) {
+
+      console.log(error);
+
+      Alert.alert(
+        'Order failed'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
   // 🔥 MAIN PAYMENT FUNCTION
   const handlePayment = async () => {
     try {
@@ -114,12 +225,39 @@ export default function PaymentScreen() {
 
       // 🔥 OPEN UPI FIRST
       if (method === 'UPI') {
+
         const opened =
           await openUPI();
 
         if (!opened) return;
-      }
 
+        Alert.alert(
+          'Payment Confirmation',
+          'Did you complete the payment?',
+          [
+            {
+              text: 'No',
+              style: 'cancel',
+              onPress: () => {
+                console.log(
+                  'Payment cancelled'
+                );
+              },
+            },
+
+            {
+              text: 'Yes',
+              onPress: async () => {
+
+                await createOrder();
+
+              },
+            },
+          ]
+        );
+
+        return;
+      }
       setLoading(true);
 
       const userData =
@@ -148,6 +286,10 @@ export default function PaymentScreen() {
           address || 'No address',
 
         paymentMethod: method,
+        paymentReceived:
+          method === 'COD'
+            ? false
+            : true,
 
         userLocation: {
           lat: Number(lat),
@@ -263,7 +405,7 @@ export default function PaymentScreen() {
             style={[
               styles.option,
               method === type &&
-                styles.active,
+              styles.active,
             ]}
             onPress={() =>
               setMethod(type)
@@ -295,8 +437,8 @@ export default function PaymentScreen() {
           {loading
             ? 'Processing...'
             : method === 'UPI'
-            ? `Pay ₹${total} with UPI`
-            : `Place Order ₹${total}`}
+              ? `Pay ₹${total} with UPI`
+              : `Place Order ₹${total}`}
         </Text>
       </TouchableOpacity>
     </View>

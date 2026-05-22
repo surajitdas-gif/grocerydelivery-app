@@ -123,34 +123,6 @@ router.post('/place-order', async (req, res) => {
 });
 
 
-// ==============================
-// USER ORDERS
-// ==============================
-router.get(
-  '/my-orders/:userId',
-  async (req, res) => {
-
-    try {
-
-      const orders =
-        await Order.find({
-          userId:
-            req.params.userId,
-        }).sort({
-          createdAt: -1,
-        });
-
-      res.json(orders);
-
-    } catch (error) {
-
-      res.status(500).json({
-        message: error.message,
-      });
-    }
-  }
-);
-
 
 // ==============================
 // ALL ORDERS
@@ -407,6 +379,69 @@ router.get(
       res.status(500).json({
         message: error.message,
       });
+    }
+  }
+);
+
+
+router.get('/my-orders/:userId', async (req, res) => {
+
+  try {
+
+    const orders = await Order.find({
+      userId: req.params.userId,
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      orders,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch orders',
+    });
+
+  }
+
+});
+
+
+
+router.put(
+  "/payment/:id",
+  async (req, res) => {
+
+    try {
+
+      const order =
+        await Order.findByIdAndUpdate(
+          req.params.id,
+          {
+            paymentReceived:
+              req.body.paymentReceived,
+          },
+          { new: true }
+        );
+
+      res.json({
+        success: true,
+        order,
+      });
+
+    } catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+        success: false,
+        message: "Payment update failed",
+      });
+
     }
   }
 );

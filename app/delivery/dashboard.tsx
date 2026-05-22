@@ -1,1107 +1,39 @@
 
-// // import React, { useState, useCallback, useEffect, useRef } from 'react';
-// // import {
-// //   View,
-// //   Text,
-// //   StyleSheet,
-// //   ScrollView,
-// //   TouchableOpacity,
-// //   Alert,
-// //   StatusBar,
-// //   Linking,
-// // } from 'react-native';
 
-// // import { socket } from "@/socket";
-// // import AsyncStorage from '@react-native-async-storage/async-storage';
-// // import { useFocusEffect, router } from 'expo-router';
-// // import * as Location from 'expo-location';
-
-// // const BASE_URL = "http://172.20.10.3:5000";
-
-// // export default function DeliveryDashboard() {
-// //   const [orders, setOrders] = useState<any[]>([]);
-// //   const trackingOrderRef = useRef<string | null>(null);
- 
-
-// //   useFocusEffect(
-// //     useCallback(() => {
-// //       loadOrders();
-// //     }, [])
-// //   );
-
-// //   useEffect(() => {
-// //     socket.on("newOrder", (order) => {
-// //       setOrders((prev) => [order, ...prev]);
-// //     });
-
-// //     socket.on("orderUpdated", (updatedOrder) => {
-// //       setOrders((prev) =>
-// //         prev.map((o) =>
-// //           o._id === updatedOrder._id ? updatedOrder : o
-// //         )
-// //       );
-// //     });
-
-// //     return () => {
-// //       socket.off("newOrder");
-// //       socket.off("orderUpdated");
-// //     };
-// //   }, []);
-
-// //   const startTracking = async (
-// //   orderId: string
-// // ) => {
-
-// //   trackingOrderRef.current =
-// //     orderId;
-
-// //   const { status } =
-// //     await Location.requestForegroundPermissionsAsync();
-
-// //   if (status !== 'granted') {
-// //     return;
-// //   }
-
-// //   const subscription =
-// //     await Location.watchPositionAsync(
-// //       {
-// //         accuracy:
-// //           Location.Accuracy.High,
-
-// //         timeInterval: 3000,
-
-// //         distanceInterval: 5,
-// //       },
-
-// //       async (location) => {
-
-// //         const lat =
-// //           location.coords.latitude;
-
-// //         const lng =
-// //           location.coords.longitude;
-
-// //         console.log(
-// //           "📍 SENDING LOCATION:",
-// //           lat,
-// //           lng
-// //         );
-
-// //         await fetch(
-// //           `${BASE_URL}/api/orders/update-location/${orderId}`,
-// //           {
-// //             method: 'PUT',
-
-// //             headers: {
-// //               'Content-Type':
-// //                 'application/json',
-// //             },
-
-// //             body: JSON.stringify({
-// //               lat,
-// //               lng,
-// //             }),
-// //           }
-// //         );
-// //       }
-// //     );
-
-// //   return subscription;
-// // };
-// //   const stopTracking = () => {
-// //     trackingOrderRef.current = null;
-// //     if (intervalRef.current) clearInterval(intervalRef.current);
-// //   };
-
-// //   const loadOrders = async () => {
-// //     try {
-// //       const res = await fetch(`${BASE_URL}/api/orders/all-orders`);
-// //       const data = await res.json();
-// //       setOrders(Array.isArray(data) ? data : []);
-// //     } catch (err) {
-// //       console.log(err);
-// //     }
-// //   };
-
-// //   const updateStatus = async (
-// //   id: string,
-// //   status: string
-// // ) => {
-// //   try {
-
-// //     console.log("🚀 CLICKED:", status);
-
-// //     const userData =
-// //       await AsyncStorage.getItem("user");
-
-// //     console.log(
-// //       "📦 STORAGE:",
-// //       userData
-// //     );
-
-// //     const user = userData
-// //       ? JSON.parse(userData)
-// //       : null;
-
-// //     console.log(
-// //       "👤 USER:",
-// //       user
-// //     );
-
-// //     if (!user || !user._id) {
-// //       Alert.alert(
-// //         "User _id missing"
-// //       );
-
-// //       return;
-// //     }
-
-// //     console.log(
-// //       "✅ deliveryBoyId:",
-// //       user._id
-// //     );
-
-// //     const res = await fetch(
-// //       `${BASE_URL}/api/orders/status/${id}`,
-// //       {
-// //         method: "PUT",
-
-// //         headers: {
-// //           "Content-Type":
-// //             "application/json",
-// //         },
-
-// //         body: JSON.stringify({
-// //           status,
-// //           deliveryBoyId:
-// //             user._id,
-// //         }),
-// //       }
-// //     );
-
-// //     const data = await res.json();
-
-// //     console.log(
-// //       "📡 RESPONSE:",
-// //       data
-// //     );
-
-// //     if (!res.ok) {
-// //       Alert.alert(
-// //         data.message ||
-// //           "Update failed"
-// //       );
-
-// //       return;
-// //     }
-
-// //     // 🚚 START LIVE TRACKING
-// //     if (
-// //       status ===
-// //       "Out for Delivery"
-// //     ) {
-
-// //       console.log(
-// //         "🚚 STARTING LIVE TRACKING"
-// //       );
-
-// //       startTracking(id);
-// //     }
-
-// //     // ✅ STOP TRACKING
-// //     if (
-// //       status === "Delivered"
-// //     ) {
-
-// //       console.log(
-// //         "🛑 STOP TRACKING"
-// //       );
-
-// //       stopTracking();
-// //     }
-
-// //     Alert.alert(
-// //       "Updated",
-// //       status
-// //     );
-
-// //     loadOrders();
-
-// //   } catch (err) {
-
-// //     console.log(
-// //       "❌ STATUS ERROR:",
-// //       err
-// //     );
-// //   }
-// // };
-
-// //   // ✅ FIXED CALL FUNCTION
-// //   const callUser = async (phone: string) => {
-// //     if (!phone) {
-// //       Alert.alert("No phone number");
-// //       return;
-// //     }
-
-// //     try {
-// //       await Linking.openURL(`tel:${phone}`);
-// //     } catch {
-// //       Alert.alert("Call failed");
-// //     }
-// //   };
-
-// //   const logout = async () => {
-// //     await AsyncStorage.clear();
-// //     router.replace('/auth/login' as any);
-// //   };
-
-// //   return (
-// //     <View style={styles.container}>
-// //       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-
-// //       <View style={styles.header}>
-// //         <Text style={styles.title}>Delivery Dashboard</Text>
-// //         <TouchableOpacity onPress={logout}>
-// //           <Text style={styles.logout}>Logout</Text>
-// //         </TouchableOpacity>
-// //       </View>
-
-// //       <ScrollView>
-// //         {orders.map((order) => (
-// //           <View key={order._id} style={styles.card}>
-
-// //             <Text style={styles.orderId}>🆔 {order._id.slice(-6)}</Text>
-// //             <Text style={styles.status}>📦 {order.status}</Text>
-// //             <Text style={styles.total}>💰 ₹{order.total}</Text>
-
-// //             {/* ✅ FIXED USER INFO */}
-// //             <Text>👤 {order.customerName || "No Name"}</Text>
-// //             <Text>📞 {order.customerPhone || "No phone"}</Text>
-
-// //             {order.customerAltPhone ? (
-// //               <Text>☎️ {order.customerAltPhone}</Text>
-// //             ) : null}
-
-// //             <Text>📍 {order.address || "No address"}</Text>
-
-// //             <Text>📦 Items:</Text>
-// //             {order.items?.map((item: any, i: number) => (
-// //               <Text key={i}>• {item.name} x {item.qty}</Text>
-// //             ))}
-
-// //             {/* ACTION BUTTONS */}
-// //             <View style={styles.buttonRow}>
-
-// //               {/* ✅ FIXED CALL BUTTON */}
-// //               <TouchableOpacity
-// //                 style={styles.callBtn}
-// //                 onPress={() => callUser(order.customerPhone)}
-// //               >
-// //                 <Text style={styles.btnText}>📞 Call</Text>
-// //               </TouchableOpacity>
-
-// //               <TouchableOpacity
-// //                 style={styles.mapBtn}
-// //                 onPress={() => router.push(`/track?id=${order._id}`)}
-// //               >
-// //                 <Text style={styles.btnText}>🗺 Track</Text>
-// //               </TouchableOpacity>
-
-// //             </View>
-
-// //             <View style={styles.statusRow}>
-// //               <TouchableOpacity
-// //                 style={styles.smallBtn}
-// //                 onPress={() => updateStatus(order._id, "Preparing")}
-// //               >
-// //                 <Text>🍳</Text>
-// //               </TouchableOpacity>
-
-// //               <TouchableOpacity
-// //                 style={styles.smallBtn}
-// //                 onPress={() => updateStatus(order._id, "Out for Delivery")}
-// //               >
-// //                 <Text>🚚</Text>
-// //               </TouchableOpacity>
-
-// //               <TouchableOpacity
-// //                 style={styles.smallBtn}
-// //                 onPress={() => updateStatus(order._id, "Delivered")}
-// //               >
-// //                 <Text>✅</Text>
-// //               </TouchableOpacity>
-// //             </View>
-
-// //           </View>
-// //         ))}
-// //       </ScrollView>
-// //     </View>
-// //   );
-// // }
-
-// // const styles = StyleSheet.create({
-// //   container: { flex: 1, backgroundColor: "#f1f5f9" },
-
-// //   header: {
-// //     backgroundColor: "#0f172a",
-// //     padding: 20,
-// //     flexDirection: "row",
-// //     justifyContent: "space-between",
-// //   },
-
-// //   title: {
-// //     color: "#fff",
-// //     fontSize: 20,
-// //     fontWeight: "bold",
-// //   },
-
-// //   logout: {
-// //     color: "red",
-// //     fontWeight: "600",
-// //   },
-
-// //   card: {
-// //     backgroundColor: "#fff",
-// //     margin: 10,
-// //     padding: 15,
-// //     borderRadius: 12,
-// //     elevation: 3,
-// //   },
-
-// //   orderId: {
-// //     fontWeight: "bold",
-// //     marginBottom: 5,
-// //   },
-
-// //   status: {
-// //     fontWeight: "600",
-// //     color: "#1d4ed8",
-// //   },
-
-// //   total: {
-// //     marginBottom: 8,
-// //   },
-
-// //   buttonRow: {
-// //     flexDirection: "row",
-// //     gap: 10,
-// //     marginTop: 10,
-// //   },
-
-// //   callBtn: {
-// //     backgroundColor: "#16a34a",
-// //     padding: 8,
-// //     borderRadius: 8,
-// //     flex: 1,
-// //   },
-
-// //   mapBtn: {
-// //     backgroundColor: "#2563eb",
-// //     padding: 8,
-// //     borderRadius: 8,
-// //     flex: 1,
-// //   },
-
-// //   btnText: {
-// //     color: "#fff",
-// //     textAlign: "center",
-// //     fontWeight: "600",
-// //   },
-
-// //   statusRow: {
-// //     flexDirection: "row",
-// //     justifyContent: "space-around",
-// //     marginTop: 12,
-// //   },
-
-// //   smallBtn: {
-// //     backgroundColor: "#e5e7eb",
-// //     padding: 10,
-// //     borderRadius: 8,
-// //   },
-// // });
-// import React, {
-//   useState,
-//   useCallback,
-//   useEffect,
-//   useRef,
-// } from 'react';
-
-// import {
-//   View,
-//   Text,
-//   StyleSheet,
-//   ScrollView,
-//   TouchableOpacity,
-//   Alert,
-//   StatusBar,
-//   Linking,
-// } from 'react-native';
-
-// import { socket } from "@/socket";
-
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// import {
-//   useFocusEffect,
-//   router,
-// } from 'expo-router';
-
-// import * as Location from 'expo-location';
-
-// const BASE_URL =
-//   "http://172.20.10.3:5000";
-
-// export default function DeliveryDashboard() {
-
-//   const [orders, setOrders] =
-//     useState<any[]>([]);
-
-//   const trackingOrderRef =
-//     useRef<string | null>(null);
-
-//   const locationSubscriptionRef =
-//     useRef<any>(null);
-
-//   // =========================
-//   // LOAD ORDERS
-//   // =========================
-//   useFocusEffect(
-//     useCallback(() => {
-
-//       loadOrders();
-
-//     }, [])
-//   );
-
-//   // =========================
-//   // SOCKET EVENTS
-//   // =========================
-//   useEffect(() => {
-
-//     socket.on(
-//       "newOrder",
-//       (order) => {
-
-//         setOrders((prev) => [
-//           order,
-//           ...prev,
-//         ]);
-//       }
-//     );
-
-//     socket.on(
-//       "orderUpdated",
-//       (updatedOrder) => {
-
-//         setOrders((prev) =>
-//           prev.map((o) =>
-//             o._id === updatedOrder._id
-//               ? updatedOrder
-//               : o
-//           )
-//         );
-//       }
-//     );
-
-//     return () => {
-
-//       socket.off("newOrder");
-
-//       socket.off("orderUpdated");
-//     };
-
-//   }, []);
-
-//   // =========================
-//   // START LIVE TRACKING
-//   // =========================
-//   const startTracking = async (
-//     orderId: string
-//   ) => {
-
-//     try {
-
-//       trackingOrderRef.current =
-//         orderId;
-
-//       const { status } =
-//         await Location.requestForegroundPermissionsAsync();
-
-//       if (status !== 'granted') {
-
-//         Alert.alert(
-//           "Location permission denied"
-//         );
-
-//         return;
-//       }
-
-//       // REMOVE OLD WATCH
-//       if (
-//         locationSubscriptionRef.current
-//       ) {
-
-//         await locationSubscriptionRef.current.remove();
-
-//         locationSubscriptionRef.current =
-//           null;
-//       }
-
-//       // START NEW WATCH
-//       locationSubscriptionRef.current =
-//         await Location.watchPositionAsync(
-//           {
-//             accuracy:
-//               Location.Accuracy.High,
-
-//             timeInterval: 3000,
-
-//             distanceInterval: 5,
-//           },
-
-//           async (location) => {
-
-//             const lat =
-//               location.coords.latitude;
-
-//             const lng =
-//               location.coords.longitude;
-
-//             console.log(
-//               "📍 SENDING LOCATION:",
-//               lat,
-//               lng
-//             );
-
-//             await fetch(
-//               `${BASE_URL}/api/orders/update-location/${orderId}`,
-//               {
-//                 method: 'PUT',
-
-//                 headers: {
-//                   'Content-Type':
-//                     'application/json',
-//                 },
-
-//                 body: JSON.stringify({
-//                   lat,
-//                   lng,
-//                 }),
-//               }
-//             );
-//           }
-//         );
-
-//     } catch (err) {
-
-//       console.log(
-//         "❌ TRACKING ERROR:",
-//         err
-//       );
-//     }
-//   };
-
-//   // =========================
-//   // STOP TRACKING
-//   // =========================
-//   const stopTracking = async () => {
-
-//     trackingOrderRef.current =
-//       null;
-
-//     if (
-//       locationSubscriptionRef.current
-//     ) {
-
-//       await locationSubscriptionRef.current.remove();
-
-//       locationSubscriptionRef.current =
-//         null;
-//     }
-//   };
-
-//   // =========================
-//   // LOAD ALL ORDERS
-//   // =========================
-//   const loadOrders = async () => {
-
-//     try {
-
-//       const res = await fetch(
-//         `${BASE_URL}/api/orders/all-orders`
-//       );
-
-//       const data = await res.json();
-
-//       setOrders(
-//         Array.isArray(data)
-//           ? data
-//           : []
-//       );
-
-//     } catch (err) {
-
-//       console.log(err);
-//     }
-//   };
-
-//   // =========================
-//   // UPDATE STATUS
-//   // =========================
-//   const updateStatus = async (
-//     id: string,
-//     status: string
-//   ) => {
-
-//     try {
-
-//       console.log(
-//         "🚀 CLICKED:",
-//         status
-//       );
-
-//       const userData =
-//         await AsyncStorage.getItem(
-//           "user"
-//         );
-
-//       console.log(
-//         "📦 STORAGE:",
-//         userData
-//       );
-
-//       const user = userData
-//         ? JSON.parse(userData)
-//         : null;
-
-//       console.log(
-//         "👤 USER:",
-//         user
-//       );
-
-//       if (!user || !user._id) {
-
-//         Alert.alert(
-//           "User _id missing"
-//         );
-
-//         return;
-//       }
-
-//       const res = await fetch(
-//         `${BASE_URL}/api/orders/status/${id}`,
-//         {
-//           method: "PUT",
-
-//           headers: {
-//             "Content-Type":
-//               "application/json",
-//           },
-
-//           body: JSON.stringify({
-//             status,
-
-//             deliveryBoyId:
-//               user._id,
-//           }),
-//         }
-//       );
-
-//       const data =
-//         await res.json();
-
-//       console.log(
-//         "📡 RESPONSE:",
-//         data
-//       );
-
-//       if (!res.ok) {
-
-//         Alert.alert(
-//           data.message ||
-//             "Update failed"
-//         );
-
-//         return;
-//       }
-
-//       // START GPS
-//       if (
-//         status ===
-//         "Out for Delivery"
-//       ) {
-
-//         console.log(
-//           "🚚 STARTING LIVE TRACKING"
-//         );
-
-//         startTracking(id);
-//       }
-
-//       // STOP GPS
-//       if (
-//         status ===
-//         "Delivered"
-//       ) {
-
-//         console.log(
-//           "🛑 STOP TRACKING"
-//         );
-
-//         stopTracking();
-//       }
-
-//       Alert.alert(
-//         "Updated",
-//         status
-//       );
-
-//       loadOrders();
-
-//     } catch (err) {
-
-//       console.log(
-//         "❌ STATUS ERROR:",
-//         err
-//       );
-//     }
-//   };
-
-//   // =========================
-//   // CALL CUSTOMER
-//   // =========================
-//   const callUser = async (
-//     phone: string
-//   ) => {
-
-//     if (!phone) {
-
-//       Alert.alert(
-//         "No phone number"
-//       );
-
-//       return;
-//     }
-
-//     try {
-
-//       await Linking.openURL(
-//         `tel:${phone}`
-//       );
-
-//     } catch {
-
-//       Alert.alert(
-//         "Call failed"
-//       );
-//     }
-//   };
-
-//   // =========================
-//   // LOGOUT
-//   // =========================
-//   const logout = async () => {
-
-//     await AsyncStorage.clear();
-
-//     router.replace(
-//       '/auth/login' as any
-//     );
-//   };
-
-//   return (
-//     <View style={styles.container}>
-
-//       <StatusBar
-//         barStyle="light-content"
-//         backgroundColor="#0f172a"
-//       />
-
-//       {/* HEADER */}
-//       <View style={styles.header}>
-
-//         <Text style={styles.title}>
-//           Delivery Dashboard
-//         </Text>
-
-//         <TouchableOpacity
-//           onPress={logout}
-//         >
-
-//           <Text style={styles.logout}>
-//             Logout
-//           </Text>
-
-//         </TouchableOpacity>
-
-//       </View>
-
-//       {/* ORDERS */}
-//       <ScrollView>
-
-//         {orders.map((order) => (
-
-//           <View
-//             key={order._id}
-//             style={styles.card}
-//           >
-
-//             <Text style={styles.orderId}>
-//               🆔 {order._id.slice(-6)}
-//             </Text>
-
-//             <Text style={styles.status}>
-//               📦 {order.status}
-//             </Text>
-
-//             <Text style={styles.total}>
-//               💰 ₹{order.total}
-//             </Text>
-
-//             <Text>
-//               👤 {order.customerName || "No Name"}
-//             </Text>
-
-//             <Text>
-//               📞 {order.customerPhone || "No phone"}
-//             </Text>
-
-//             {order.customerAltPhone ? (
-//               <Text>
-//                 ☎️ {order.customerAltPhone}
-//               </Text>
-//             ) : null}
-
-//             <Text>
-//               📍 {order.address || "No address"}
-//             </Text>
-
-//             <Text style={{ marginTop: 8 }}>
-//               📦 Items:
-//             </Text>
-
-//             {order.items?.map(
-//               (
-//                 item: any,
-//                 i: number
-//               ) => (
-
-//                 <Text key={i}>
-//                   • {item.name} x {item.qty}
-//                 </Text>
-//               )
-//             )}
-
-//             {/* BUTTONS */}
-//             <View style={styles.buttonRow}>
-
-//               <TouchableOpacity
-//                 style={styles.callBtn}
-//                 onPress={() =>
-//                   callUser(
-//                     order.customerPhone
-//                   )
-//                 }
-//               >
-
-//                 <Text style={styles.btnText}>
-//                   📞 Call
-//                 </Text>
-
-//               </TouchableOpacity>
-
-//               <TouchableOpacity
-//                 style={styles.mapBtn}
-//                 onPress={() =>
-//                   router.push(
-//                     `/track?id=${order._id}`
-//                   )
-//                 }
-//               >
-
-//                 <Text style={styles.btnText}>
-//                   🗺 Track
-//                 </Text>
-
-//               </TouchableOpacity>
-
-//             </View>
-
-//             {/* STATUS BUTTONS */}
-//             <View style={styles.statusRow}>
-
-//               <TouchableOpacity
-//                 style={styles.smallBtn}
-//                 onPress={() =>
-//                   updateStatus(
-//                     order._id,
-//                     "Preparing"
-//                   )
-//                 }
-//               >
-
-//                 <Text>🍳</Text>
-
-//               </TouchableOpacity>
-
-//               <TouchableOpacity
-//                 style={styles.smallBtn}
-//                 onPress={() =>
-//                   updateStatus(
-//                     order._id,
-//                     "Out for Delivery"
-//                   )
-//                 }
-//               >
-
-//                 <Text>🚚</Text>
-
-//               </TouchableOpacity>
-
-//               <TouchableOpacity
-//                 style={styles.smallBtn}
-//                 onPress={() =>
-//                   updateStatus(
-//                     order._id,
-//                     "Delivered"
-//                   )
-//                 }
-//               >
-
-//                 <Text>✅</Text>
-
-//               </TouchableOpacity>
-
-//             </View>
-
-//           </View>
-//         ))}
-
-//       </ScrollView>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-
-//   container: {
-//     flex: 1,
-//     backgroundColor: "#f1f5f9",
-//   },
-
-//   header: {
-//     backgroundColor: "#0f172a",
-//     padding: 20,
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//   },
-
-//   title: {
-//     color: "#fff",
-//     fontSize: 20,
-//     fontWeight: "bold",
-//   },
-
-//   logout: {
-//     color: "red",
-//     fontWeight: "600",
-//   },
-
-//   card: {
-//     backgroundColor: "#fff",
-//     margin: 10,
-//     padding: 15,
-//     borderRadius: 12,
-//     elevation: 3,
-//   },
-
-//   orderId: {
-//     fontWeight: "bold",
-//     marginBottom: 5,
-//   },
-
-//   status: {
-//     fontWeight: "600",
-//     color: "#1d4ed8",
-//   },
-
-//   total: {
-//     marginBottom: 8,
-//   },
-
-//   buttonRow: {
-//     flexDirection: "row",
-//     gap: 10,
-//     marginTop: 10,
-//   },
-
-//   callBtn: {
-//     backgroundColor: "#16a34a",
-//     padding: 8,
-//     borderRadius: 8,
-//     flex: 1,
-//   },
-
-//   mapBtn: {
-//     backgroundColor: "#2563eb",
-//     padding: 8,
-//     borderRadius: 8,
-//     flex: 1,
-//   },
-
-//   btnText: {
-//     color: "#fff",
-//     textAlign: "center",
-//     fontWeight: "600",
-//   },
-
-//   statusRow: {
-//     flexDirection: "row",
-//     justifyContent: "space-around",
-//     marginTop: 12,
-//   },
-
-//   smallBtn: {
-//     backgroundColor: "#e5e7eb",
-//     padding: 10,
-//     borderRadius: 8,
-//   },
-// });
-
-import React, {
-  useState,
+import {
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from 'react';
 
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Alert,
-  StatusBar,
-  Linking,
   Dimensions,
+  Image,
+  Linking,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { socket } from "@/socket";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, router } from 'expo-router';
 import * as Location from 'expo-location';
+import { router, useFocusEffect } from 'expo-router';
 
 const BASE_URL = "http://172.20.10.3:5000";
 const { width } = Dimensions.get('window');
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
-  'Pending':          { color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
-  'Preparing':        { color: '#1e40af', bg: '#dbeafe', dot: '#3b82f6' },
+  'Pending': { color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
+  'Preparing': { color: '#1e40af', bg: '#dbeafe', dot: '#3b82f6' },
   'Out for Delivery': { color: '#065f46', bg: '#d1fae5', dot: '#10b981' },
-  'Delivered':        { color: '#166534', bg: '#dcfce7', dot: '#22c55e' },
+  'Delivered': { color: '#166534', bg: '#dcfce7', dot: '#22c55e' },
 };
 
 const getStatusStyle = (status: string) =>
@@ -1209,6 +141,52 @@ export default function DeliveryDashboard() {
     }
   };
 
+  const markPaymentReceived =
+    async (id: string) => {
+
+      try {
+
+        const res = await fetch(
+          `${BASE_URL}/api/orders/payment/${id}`,
+          {
+            method: "PUT",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              paymentReceived: true,
+            }),
+          }
+        );
+
+        const data =
+          await res.json();
+
+        if (data.success) {
+
+          Alert.alert(
+            "Payment received ✅"
+          );
+
+          loadOrders();
+        }
+
+      } catch (err) {
+
+        console.log(
+          "PAYMENT UPDATE ERROR:",
+          err
+        );
+
+        Alert.alert(
+          "Payment update failed"
+        );
+      }
+    };
+
   const callUser = async (phone: string) => {
     if (!phone) { Alert.alert("No phone number"); return; }
     try {
@@ -1282,7 +260,79 @@ export default function DeliveryDashboard() {
                 </View>
 
                 {/* ── Amount ── */}
-                <Text style={styles.amount}>₹{order.total}</Text>
+                <Text style={styles.amount}>
+                  ₹{order.total}
+                </Text>
+
+                {/* ── PAYMENT STATUS ── */}
+                {order?.paymentMethod === "COD" && (
+
+                  <View style={styles.paymentSection}>
+
+                    <View style={styles.paymentTop}>
+
+                      <Text style={styles.paymentTitle}>
+                        Cash on Delivery
+                      </Text>
+
+                      {order?.paymentReceived ? (
+
+                        <View style={styles.paidBadge}>
+                          <Text style={styles.paidBadgeText}>
+                            ✓ Paid
+                          </Text>
+                        </View>
+
+                      ) : (
+
+                        <View style={styles.unpaidBadge}>
+                          <Text style={styles.unpaidBadgeText}>
+                            Pending
+                          </Text>
+                        </View>
+
+                      )}
+
+                    </View>
+
+                    {!order?.paymentReceived && (
+                      <>
+
+                        <View style={styles.qrBox}>
+
+                          <Image
+                            source={{
+                              uri:
+                                `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                                  `upi://pay?pa=dasantu0118-2@oksbi&pn=Village Grocery&am=${order.total}&tn=Order-${order._id}&cu=INR`
+                                )}`,
+                            }}
+                            style={styles.qrImage}
+                          />
+                          <Text style={styles.qrText}>
+                            Scan QR to Pay
+                          </Text>
+
+                          <Text style={styles.qrSub}>
+                            UPI Accepted
+                          </Text>
+
+                        </View>
+                        <TouchableOpacity
+                          style={styles.paymentBtn}
+                          onPress={() =>
+                            markPaymentReceived(order._id)
+                          }
+                        >
+                          <Text style={styles.paymentBtnText}>
+                            Payment Received
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+
+                  </View>
+                )}
 
                 <View style={styles.divider} />
 
@@ -1350,33 +400,103 @@ export default function DeliveryDashboard() {
                 <View style={styles.statusUpdaterLabel}>
                   <Text style={styles.statusUpdaterTitle}>UPDATE STATUS</Text>
                 </View>
-                <View style={styles.statusRow}>
-                  <TouchableOpacity
-                    style={styles.statusBtn}
-                    onPress={() => updateStatus(order._id, "Preparing")}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.statusBtnIcon}>🍳</Text>
-                    <Text style={styles.statusBtnLabel}>Preparing</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.statusBtn, styles.statusBtnOrange]}
-                    onPress={() => updateStatus(order._id, "Out for Delivery")}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.statusBtnIcon}>🚚</Text>
-                    <Text style={[styles.statusBtnLabel, { color: '#92400e' }]}>Out for{'\n'}Delivery</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.statusBtn, styles.statusBtnGreen]}
-                    onPress={() => updateStatus(order._id, "Delivered")}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.statusBtnIcon}>✅</Text>
-                    <Text style={[styles.statusBtnLabel, { color: '#166534' }]}>Delivered</Text>
-                  </TouchableOpacity>
-                </View>
 
+                <View style={styles.statusRow}>
+
+                  {/* PREPARING */}
+                  <TouchableOpacity
+                    style={[
+                      styles.statusBtn,
+                      (
+                        order.status === "Out for Delivery" ||
+                        order.status === "Delivered"
+                      ) && styles.disabledBtn,
+                    ]}
+                    disabled={
+                      order.status === "Out for Delivery" ||
+                      order.status === "Delivered"
+                    }
+                    onPress={() =>
+                      updateStatus(order._id, "Preparing")
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.statusBtnIcon}>
+                      🍳
+                    </Text>
+
+                    <Text style={styles.statusBtnLabel}>
+                      Preparing
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* OUT FOR DELIVERY */}
+                  <TouchableOpacity
+                    style={[
+                      styles.statusBtn,
+                      styles.statusBtnOrange,
+                      order.status === "Delivered" &&
+                      styles.disabledBtn,
+                    ]}
+                    disabled={
+                      order.status === "Delivered"
+                    }
+                    onPress={() =>
+                      updateStatus(
+                        order._id,
+                        "Out for Delivery"
+                      )
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.statusBtnIcon}>
+                      🚚
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.statusBtnLabel,
+                        { color: '#92400e' },
+                      ]}
+                    >
+                      Out for{"\n"}Delivery
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* DELIVERED */}
+                  <TouchableOpacity
+                    style={[
+                      styles.statusBtn,
+                      styles.statusBtnGreen,
+                      order.status === "Delivered" &&
+                      styles.disabledBtn,
+                    ]}
+                    disabled={
+                      order.status === "Delivered"
+                    }
+                    onPress={() =>
+                      updateStatus(
+                        order._id,
+                        "Delivered"
+                      )
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.statusBtnIcon}>
+                      ✅
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.statusBtnLabel,
+                        { color: '#166534' },
+                      ]}
+                    >
+                      Delivered
+                    </Text>
+                  </TouchableOpacity>
+
+                </View>
               </View>
             );
           })
@@ -1740,5 +860,102 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
     textAlign: 'center',
     lineHeight: 14,
+  },
+
+  disabledBtn: {
+    opacity: 0.45,
+  },
+
+
+  paymentSection: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+  },
+
+  paymentTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  paymentTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+
+  paidBadge: {
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 100,
+  },
+
+  paidBadgeText: {
+    color: '#2563eb',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+
+  unpaidBadge: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 100,
+  },
+
+  unpaidBadgeText: {
+    color: '#92400e',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+
+  qrBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    paddingVertical: 24,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+
+  qrEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+
+  qrText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  qrImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 12,
+  },
+
+  qrSub: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+
+  paymentBtn: {
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+
+  paymentBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

@@ -1,17 +1,17 @@
 
 
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Image,
-  StatusBar,
-  TouchableOpacity,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useCart } from '../../src/context/CartContext';
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -153,10 +153,10 @@ export default function OrdersScreen() {
                     <Text style={styles.orderDate}>
                       {order.createdAt
                         ? new Date(order.createdAt).toLocaleDateString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })
                         : order.date || '—'}
                     </Text>
                   </View>
@@ -168,7 +168,7 @@ export default function OrdersScreen() {
                     <Text style={[styles.statusText, { color: cfg.text }]}>
                       {order.status
                         ? order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1).toLowerCase()
+                        order.status.slice(1).toLowerCase()
                         : 'Pending'}
                     </Text>
                   </View>
@@ -220,8 +220,20 @@ export default function OrdersScreen() {
                     <Text style={styles.footerTotal}>₹{orderTotal}</Text>
                   </View>
 
-                  <TouchableOpacity style={styles.reorderBtn}>
-                    <Text style={styles.reorderText}>Reorder</Text>
+                  <TouchableOpacity
+                    style={styles.reorderBtn}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/screens/CartScreen",
+                        params: {
+                          reorder: JSON.stringify(order.items),
+                        },
+                      })
+                    }
+                  >
+                    <Text style={styles.reorderText}>
+                      Reorder
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>

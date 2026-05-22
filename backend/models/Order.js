@@ -18,7 +18,16 @@ const orderSchema = new mongoose.Schema({
   },
 
   status: { type: String, default: 'Preparing' },
-  paymentMethod: { type: String, default: 'UPI' },
+
+paymentMethod: {
+  type: String,
+  default: 'UPI',
+},
+
+paymentReceived: {
+  type: Boolean,
+  default: false,
+},
 
   deliveryBoy: { type: String, default: '' },
   deliveryBoyId: { type: String, default: '' },

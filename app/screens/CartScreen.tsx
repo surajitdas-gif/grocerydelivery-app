@@ -1,23 +1,60 @@
 
-import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  TextInput,
+  router,
+  useLocalSearchParams,
+} from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
   Alert,
+  Image,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { router } from 'expo-router';
 import { useCart } from '../../src/context/CartContext';
 
 export default function CartScreen() {
-  const { cart, increaseQty, decreaseQty } = useCart();
+  const {
+    cart,
+    increaseQty,
+    decreaseQty,
+    addToCart,
+  } = useCart();
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
+  const { reorder } =
+    useLocalSearchParams();
+  useEffect(() => {
+    if (reorder) {
+      try {
+        const items = JSON.parse(
+          reorder as string
+        );
+
+        items.forEach((item: any) => {
+          for (
+            let i = 0;
+            i < (item.qty || 1);
+            i++
+          ) {
+            addToCart({
+              ...item,
+              qty: 1,
+            });
+          }
+        });
+      } catch (error) {
+        console.log(
+          'Reorder error:',
+          error
+        );
+      }
+    }
+  }, [reorder]);
 
   // ── All original logic preserved ──────────────────────────────────────────
 
@@ -26,28 +63,22 @@ export default function CartScreen() {
     0
   );
 
-  const deliveryFee = 30;
-  const platformFee = 5;
+  const deliveryFee = 1;
+  const platformFee = 2;
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const total = subtotal + deliveryFee + platformFee - discount;
 
-  // const handleCheckout = () => {
-  //   if (cart.length === 0) {
-  //     Alert.alert('Cart is empty');
-  //     return;
-  //   }
-  //   router.push('/payment');
-  // };
+  
 
   const handleCheckout = () => {
-  if (cart.length === 0) {
-    Alert.alert('Cart is empty');
-    return;
-  }
+    if (cart.length === 0) {
+      Alert.alert('Cart is empty');
+      return;
+    }
 
-  // 🔥 OPEN MAP FIRST
-  router.push('/select-location');
-};
+    // 🔥 OPEN MAP FIRST
+    router.push('/select-location');
+  };
   const handleCoupon = () => {
     if (coupon.trim().toUpperCase() === 'FRESH10') {
       setCouponApplied(true);

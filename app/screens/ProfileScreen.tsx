@@ -1,18 +1,18 @@
 
 
 
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  TextInput,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
+import React, { useState } from 'react';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useCart } from '../../src/context/CartContext';
 
 export default function ProfileScreen() {
@@ -20,8 +20,10 @@ export default function ProfileScreen() {
   const [userEmail, setUserEmail] = useState('user@gmail.com');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [realOrders, setRealOrders] =
+  useState<any[]>([]);
 
-  const { orders, cart } = useCart();
+ const { cart } = useCart();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -40,6 +42,17 @@ export default function ProfileScreen() {
         setUserEmail(parsed.email || 'user@gmail.com');
         setPhone(parsed.phone || '');
         setAddress(parsed.address || '');
+        const res = await fetch(
+  `http://172.20.10.3:5000/api/orders/my-orders/${parsed._id}`
+);
+
+const data = await res.json();
+
+if (data.success) {
+
+  setRealOrders(data.orders);
+
+}
       }
     } catch (error) {
       console.log(error);
@@ -102,7 +115,9 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const totalSpent = orders.reduce((sum, order) => {
+const totalSpent = realOrders.reduce(
+  (sum, order) => {
+
     return (
       sum +
       order.items.reduce(
@@ -111,7 +126,10 @@ export default function ProfileScreen() {
         0
       )
     );
-  }, 0);
+
+  },
+  0
+);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -138,7 +156,7 @@ export default function ProfileScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statValue}>{orders.length}</Text>
+            <Text style={styles.statValue}>{realOrders.length}</Text>
             <Text style={styles.statLabel}>Orders</Text>
           </View>
 
@@ -196,7 +214,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-            {/* ── ACCOUNT ── */}
+      {/* ── ACCOUNT ── */}
       <View style={styles.section}>
 
         <View style={styles.sectionHeader}>
@@ -212,7 +230,7 @@ export default function ProfileScreen() {
           style={styles.card}
           activeOpacity={0.85}
           onPress={() =>
-           router.push('/(tabs)/orders' as any)
+            router.push('/(tabs)/orders' as any)
           }
         >
 
@@ -231,7 +249,7 @@ export default function ProfileScreen() {
               </Text>
 
               <Text style={styles.label}>
-                {orders.length} orders placed
+                {realOrders.length} orders placed
               </Text>
 
             </View>
@@ -282,6 +300,83 @@ export default function ProfileScreen() {
 
         </TouchableOpacity>
 
+      </View>
+
+
+      {/* ── HELP & SUPPORT ── */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionAccent} />
+          <Text style={styles.sectionTitle}>Help & Support</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => router.push('/help/faq' as any)}
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIcon}>
+              <Text style={styles.cardIconText}>❓</Text>
+            </View>
+            <View style={styles.cardBody}>
+              <Text style={styles.value}>FAQs</Text>
+              <Text style={styles.label}>Frequently asked questions</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => router.push('/help/ai-chat' as any)}
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIcon}>
+              <Text style={styles.cardIconText}>💬</Text>
+            </View>
+            <View style={styles.cardBody}>
+              <Text style={styles.value}>Contact Us</Text>
+              <Text style={styles.label}>Chat, email or call support</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => router.push('/help/report' as any)}
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIcon}>
+              <Text style={styles.cardIconText}>🐛</Text>
+            </View>
+            <View style={styles.cardBody}>
+              <Text style={styles.value}>Report a Problem</Text>
+              <Text style={styles.label}>Let us know what went wrong</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => router.push('/help/privacy' as any)}
+        >
+          <View style={styles.cardRow}>
+            <View style={styles.cardIcon}>
+              <Text style={styles.cardIconText}>🔒</Text>
+            </View>
+            <View style={styles.cardBody}>
+              <Text style={styles.value}>Privacy Policy</Text>
+              <Text style={styles.label}>How we use your data</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* ── ACTIONS ── */}
