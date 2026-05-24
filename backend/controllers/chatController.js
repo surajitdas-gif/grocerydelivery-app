@@ -1,4 +1,3 @@
-const fetch = require("node-fetch");
 const Order = require("../models/Order");
 
 const SUPPORT_PHONE =
@@ -38,8 +37,7 @@ reply:
 }
 
 if(
-lowerMsg.includes("track")
-||
+lowerMsg.includes("track") ||
 lowerMsg.includes("order status")
 ){
 
@@ -68,13 +66,8 @@ reply:
 }
 
 if(
-lowerMsg.includes(
-"change address"
-)
-||
-lowerMsg.includes(
-"delivery address"
-)
+lowerMsg.includes("change address") ||
+lowerMsg.includes("delivery address")
 ){
 
 return res.json({
@@ -85,6 +78,13 @@ reply:
 });
 
 }
+
+console.log(
+"GEMINI:",
+process.env.GEMINI_API_KEY
+? "FOUND"
+: "NOT FOUND"
+);
 
 const response =
 await fetch(
@@ -103,14 +103,11 @@ contents:[
 {
 parts:[
 {
-text:`
-You are an AI assistant for a food delivery app.
-
+text:
+`You are an AI assistant for a food delivery app.
 Reply briefly and politely.
 
-User:
-${userMessage}
-`
+User: ${userMessage}`
 }
 ]
 }
@@ -124,12 +121,17 @@ ${userMessage}
 const data =
 await response.json();
 
+console.log(
+"GEMINI RESPONSE:",
+data
+);
+
 const reply =
 data?.candidates?.[0]
 ?.content?.parts?.[0]
 ?.text;
 
-res.json({
+return res.json({
 
 reply:
 reply ||
@@ -141,10 +143,17 @@ reply ||
 
 catch(error){
 
-res.status(500)
+console.log(
+"CHAT ERROR:",
+error
+);
+
+return res
+.status(500)
 .json({
 
 reply:
+error.message ||
 "Server error"
 
 });
@@ -153,6 +162,6 @@ reply:
 
 };
 
-module.exports={
+module.exports = {
 chatBot
 };

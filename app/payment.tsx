@@ -149,22 +149,22 @@ export default function PaymentScreen() {
         customerAltPhone: altPhone,
       };
 
+
+      const BASE_URL =
+        'https://grocerydelivery-backend.onrender.com/api';
+
       const res = await fetch(
-        'http://172.20.10.3:5000/api/orders/place-order',
+        `${BASE_URL}/orders/place-order`,
         {
           method: 'POST',
 
           headers: {
-            'Content-Type':
-              'application/json',
+            'Content-Type': 'application/json',
           },
 
-          body: JSON.stringify(
-            payload
-          ),
+          body: JSON.stringify(payload),
         }
       );
-
       const data = await res.json();
 
       if (data.success) {
@@ -309,7 +309,7 @@ export default function PaymentScreen() {
       );
 
       const res = await fetch(
-        'http://172.20.10.3:5000/api/orders/place-order',
+        'https://grocerydelivery-backend.onrender.com/api/orders/place-order',
         {
           method: 'POST',
 

@@ -20,7 +20,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 // ─── Constants & Theme ────────────────────────────────────────────────────────
 
-const BASE_URL = 'http://172.20.10.3:5000/api';
+const BASE_URL = 'https://grocerydelivery-backend.onrender.com/api';
 const { width } = Dimensions.get('window');
 
 
@@ -178,16 +178,37 @@ export default function HomeScreen() {
     }
   };
 
+  
   const loadProducts = async () => {
     setLoadingProducts(true);
+
     try {
-      const res = await fetch(`${BASE_URL}/products/all-products`);
+
+     const res = await fetch(
+`${BASE_URL}/products/all-products`
+);
       const data = await res.json();
-      if (Array.isArray(data)) setProducts(data);
+
+      console.log(
+        "PRODUCTS:",
+        data
+      );
+
+      if (Array.isArray(data)) {
+        setProducts(data);
+      }
+
     } catch (error) {
-      console.error("Failed to load products:", error);
+
+      console.error(
+        "Failed to load products:",
+        error
+      );
+
     } finally {
+
       setLoadingProducts(false);
+
     }
   };
 

@@ -18,14 +18,7 @@ import {
   View,
 } from 'react-native';
 
-const BASE_URL = 'https://grocerydelivery-backend.onrender.com'; // ✅ your backend IP
-
-const ROLES = [
-  { key: 'user', label: 'Customer', emoji: '🛍️' },
-  { key: 'delivery', label: 'Delivery', emoji: '🚚' },
-  { key: 'admin', label: 'Admin', emoji: '⚙️' },
-];
-
+const BASE_URL = 'https://grocerydelivery-backend.onrender.com'; //
 export default function LoginScreen() {
   const [phone, setPhone] =
     useState('');
@@ -37,7 +30,6 @@ export default function LoginScreen() {
     useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('user');
 
   const btnScale = useRef(new Animated.Value(1)).current;
 
@@ -244,7 +236,7 @@ export default function LoginScreen() {
 
         }
         const userRole =
-          data.user?.role;
+          data.user?.role || 'user';
 
         await AsyncStorage.multiSet([
           ['token', data.token],
@@ -319,26 +311,6 @@ export default function LoginScreen() {
           <View style={styles.card}>
             <Text style={styles.title}>Welcome Back 👋</Text>
 
-            {/* Role selector */}
-            <View style={styles.roleRow}>
-              {ROLES.map((r) => (
-                <TouchableOpacity
-                  key={r.key}
-                  style={[styles.roleTab, selectedRole === r.key && styles.roleTabActive]}
-                  onPress={() => setSelectedRole(r.key)}
-                >
-                  <Text style={styles.roleEmoji}>{r.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.roleLabel,
-                      selectedRole === r.key && styles.roleLabelActive,
-                    ]}
-                  >
-                    {r.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
 
 
             <View style={styles.inputWrap}>
@@ -423,18 +395,6 @@ const styles = StyleSheet.create({
 
   title: { fontSize: 24, fontWeight: '800', marginBottom: 20 },
 
-  roleRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
-  roleTab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-  },
-  roleTabActive: { backgroundColor: '#1a4731' },
-  roleEmoji: { fontSize: 18 },
-  roleLabel: { fontSize: 12, fontWeight: '700' },
-  roleLabelActive: { color: '#fff' },
 
   inputWrap: {
     flexDirection: 'row',
