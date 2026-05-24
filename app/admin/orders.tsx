@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 
 const API_URL =
-  'http://172.20.10.3:5000';
+  'https://grocerydelivery-backend.onrender.com';
 
 export default function AdminOrders() {
   const [orders, setOrders] =

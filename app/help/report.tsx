@@ -56,7 +56,7 @@ export default function ReportScreen() {
       );
 
       const res = await fetch(
-        'http://172.20.10.3:5000/api/reports/create',
+        'https://grocerydelivery-backend.onrender.com/api/reports/create',
         {
           method: 'POST',
 

@@ -179,7 +179,7 @@ export default function AdminDashboard() {
   const [editId, setEditId] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const BASE_URL = 'http://172.20.10.3:5000';
+  const BASE_URL = 'https://grocerydelivery-backend.onrender.com';
 
   useEffect(() => {
     loadProducts();

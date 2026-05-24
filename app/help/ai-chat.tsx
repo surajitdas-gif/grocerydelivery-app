@@ -94,7 +94,7 @@ export default function ContactChatScreen() {
     try {
 
       const response = await fetch(
-        'http://172.20.10.3:5000/chat',
+        'https://grocerydelivery-backend.onrender.com/chat',
         {
           method: 'POST',
           headers: {

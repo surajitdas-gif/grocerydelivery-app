@@ -43,7 +43,7 @@ export default function ProfileScreen() {
         setPhone(parsed.phone || '');
         setAddress(parsed.address || '');
         const res = await fetch(
-  `http://172.20.10.3:5000/api/orders/my-orders/${parsed._id}`
+  `https://grocerydelivery-backend.onrender.com/api/orders/my-orders/${parsed._id}`
 );
 
 const data = await res.json();
@@ -66,7 +66,7 @@ if (data.success) {
       );
 
       await fetch(
-        `http://172.20.10.3:5000/api/update-profile/${user._id}`,
+        `https://grocerydelivery-backend.onrender.com/api/update-profile/${user._id}`,
         {
           method: 'PUT',
           headers: {

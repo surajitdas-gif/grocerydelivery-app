@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
 
-export const socket = io("http://172.20.10.3:5000", {
+export const socket = io("https://grocerydelivery-backend.onrender.com", {
   transports: ["websocket"],
 });

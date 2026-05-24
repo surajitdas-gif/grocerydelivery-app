@@ -379,7 +379,7 @@ export default function TrackOrder() {
     useRef(deliveryLocation);
 
   const BASE_URL =
-    "http://172.20.10.3:5000";
+    "https://grocerydelivery-backend.onrender.com";
     const GOOGLE_MAPS_APIKEY =
 process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 

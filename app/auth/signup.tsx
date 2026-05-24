@@ -17,7 +17,7 @@ import {
   View,
 } from 'react-native';
 
-const BASE_URL = 'http://172.20.10.3:5000'; // ✅ your backend IP
+const BASE_URL = 'https://grocerydelivery-backend.onrender.com'; // ✅ your backend IP
 
 const ROLES = [
   { key: 'user', label: 'Customer', emoji: '🛍️' },

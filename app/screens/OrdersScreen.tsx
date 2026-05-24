@@ -75,7 +75,7 @@ const getStatusConfig =
 
   };
 const socket = io(
-  "http://172.20.10.3:5000",
+  "https://grocerydelivery-backend.onrender.com",
   {
     transports: ["websocket"]
   }
@@ -153,7 +153,7 @@ export default function OrdersScreen() {
       }
 
       const res = await fetch(
-        `http://172.20.10.3:5000/api/orders/my-orders/${user._id}`
+        `https://grocerydelivery-backend.onrender.com/api/orders/my-orders/${user._id}`
       );
 
       const data = await res.json();

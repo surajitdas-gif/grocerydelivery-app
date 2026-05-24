@@ -30,7 +30,7 @@ export default function OrdersScreen() {
       const user = JSON.parse(userData);
 
       const res = await fetch(
-        `http://172.20.10.3:5000/api/orders/my-orders/${user._id}`
+        `https://grocerydelivery-backend.onrender.com/api/orders/my-orders/${user._id}`
       );
 
       const data = await res.json();

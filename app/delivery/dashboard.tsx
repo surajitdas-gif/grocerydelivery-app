@@ -25,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 
-const BASE_URL = "http://172.20.10.3:5000";
+const BASE_URL = "https://grocerydelivery-backend.onrender.com";
 const { width } = Dimensions.get('window');
 
 const STATUS_CONFIG: Record<

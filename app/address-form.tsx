@@ -21,7 +21,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL =
-  "http://172.20.10.3:5000";
+  "https://grocerydelivery-backend.onrender.com";
 
 export default function AddressForm() {
 
