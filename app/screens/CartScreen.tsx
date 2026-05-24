@@ -48,15 +48,14 @@ export default function CartScreen() {
           }
         });
       } catch (error) {
-        console.log(
-          'Reorder error:',
-          error
-        );
+        if (__DEV__) {
+          console.log(error);
+        }
       }
     }
   }, [reorder]);
 
-  // ── All original logic preserved ──────────────────────────────────────────
+  
 
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * (item.qty || 1),
@@ -68,7 +67,7 @@ export default function CartScreen() {
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
   const total = subtotal + deliveryFee + platformFee - discount;
 
-  
+
 
   const handleCheckout = () => {
     if (cart.length === 0) {
@@ -88,13 +87,13 @@ export default function CartScreen() {
     }
   };
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" />
 
-      {/* ── Fixed Header ── */}
+      {}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -117,7 +116,7 @@ export default function CartScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ── Empty State ── */}
+        {}
         {cart.length === 0 ? (
           <View style={styles.emptyCart}>
             <Text style={styles.emptyEmoji}>🛒</Text>
@@ -134,7 +133,7 @@ export default function CartScreen() {
           </View>
         ) : (
           <>
-            {/* ── Cart Items ── */}
+            {}
             <View style={styles.itemsSection}>
               {cart.map((item, index) => (
                 <View key={index} style={styles.card}>
@@ -177,7 +176,7 @@ export default function CartScreen() {
                     </View>
                   </View>
 
-                  {/* Item Total */}
+                  {}
                   <Text style={styles.itemTotal}>
                     ₹{item.price * (item.qty || 1)}
                   </Text>
@@ -185,7 +184,7 @@ export default function CartScreen() {
               ))}
             </View>
 
-            {/* ── Coupon ── */}
+            {}
             <View style={styles.couponBox}>
               <Text style={styles.couponLabel}>🎟  Apply Coupon</Text>
               <View style={styles.couponRow}>
@@ -218,7 +217,7 @@ export default function CartScreen() {
               )}
             </View>
 
-            {/* ── Bill Details ── */}
+            {}
             <View style={styles.billBox}>
               <Text style={styles.billTitle}>Bill Details</Text>
 
@@ -275,7 +274,7 @@ export default function CartScreen() {
         <View style={{ height: 110 }} />
       </ScrollView>
 
-      {/* ── Sticky Checkout Footer ── */}
+      {}
       {cart.length > 0 && (
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
@@ -297,7 +296,7 @@ export default function CartScreen() {
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
+
 
 const styles = StyleSheet.create({
   root: {

@@ -44,8 +44,9 @@ app.get("/", (req, res) => {
 });
 
 // MONGODB CONNECTION
-mongoose
-  .connect("mongodb://127.0.0.1:27017/villageDelivery")
+mongoose.connect(
+process.env.MONGODB_URI
+)
   .then(() => {
     console.log("MongoDB connected");
   })

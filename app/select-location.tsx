@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 
 export default function SelectLocation() {
   const [region, setRegion] = useState({
@@ -48,10 +48,11 @@ export default function SelectLocation() {
 
       setMarker(newLocation);
 
-      console.log("📍 AUTO LOCATION:", newLocation);
 
     } catch (err) {
-      console.log("❌ Location error:", err);
+      if (__DEV__) {
+        console.log(err);
+      }
     }
   };
 
@@ -66,7 +67,7 @@ export default function SelectLocation() {
       return;
     }
 
-    console.log("📤 SELECTED:", marker);
+
 
     // ✅ GO TO ADDRESS FORM (NOT PAYMENT)
     router.push({
@@ -86,7 +87,7 @@ export default function SelectLocation() {
         onPress={(e) => {
           const coord = e.nativeEvent.coordinate;
           setMarker(coord);
-          console.log("📍 TAP:", coord);
+
         }}
       >
         <Marker
@@ -95,7 +96,7 @@ export default function SelectLocation() {
           onDragEnd={(e) => {
             const coord = e.nativeEvent.coordinate;
             setMarker(coord);
-            console.log("📍 DRAG:", coord);
+
           }}
         />
       </MapView>

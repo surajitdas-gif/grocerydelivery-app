@@ -17,10 +17,12 @@ import { socket } from "@/socket";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
+
 // ─── Constants & Theme ────────────────────────────────────────────────────────
 
 const BASE_URL = 'http://172.20.10.3:5000/api';
 const { width } = Dimensions.get('window');
+
 
 // Premium App Palette (Swiggy / Zomato Vibe)
 const BRAND = '#FC8019'; // Swiggy Orange
@@ -74,63 +76,18 @@ const CATEGORIES = [
   { key: 'Fruits', icon: '🍎' },
   { key: 'Milk', icon: '🥛' },
   { key: 'Beauty', icon: '✨' },
+  { key: 'Eggs', icon: '🍳' },
+  { key: 'Bread', icon: '🍞' },
+  { key: 'Meat', icon: '🍗' },
+  { key: 'Fish', icon: '🐟' },
+  { key: 'Snacks', icon: '🍪' },
+  { key: 'Grains', icon: '🌾' },
+  { key: 'Cleaning', icon: '🧼' },
+  { key: 'Medicine', icon: '💊' },
+  { key: 'Others', icon: '📦' },
+
 ];
 
-// ─── Premium Product Card Component ───────────────────────────────────────────
-
-const PremiumProductCard = ({ item, compact }: { item: any, compact?: boolean }) => {
-  const imageUrl = item?.image || item?.imageUrl || 'https://via.placeholder.com/150';
-  const name = item?.name || 'Fresh Product';
-  const price = item?.price || '0';
-  const originalPrice = item?.originalPrice || null;
-  const unit = item?.unit || item?.weight || '1 pc';
-  const productId = item?._id || item?.id;
-
-  return (
-    <TouchableOpacity
-      style={[styles.cardContainer, compact && styles.cardContainerCompact]}
-      activeOpacity={0.9}
-      onPress={() => {
-        if (productId) {
-          router.push(`/product/${productId}`);
-        }
-      }}
-    >
-      <View style={styles.cardImageBox}>
-        <View style={styles.cardImageBg}>
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.cardImage}
-            resizeMode="contain"
-          />
-        </View>
-
-        <View style={styles.cardTag}>
-          <Text style={styles.cardTagText}>⚡ 12 MINS</Text>
-        </View>
-
-        <TouchableOpacity style={styles.cardAddBtn} activeOpacity={0.8}>
-          <Text style={styles.cardAddText}>ADD</Text>
-          <View style={styles.cardAddPlus}>
-            <Text style={styles.cardAddPlusText}>+</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.cardDetails}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{name}</Text>
-        <Text style={styles.cardUnit}>{unit}</Text>
-
-        <View style={styles.cardPriceRow}>
-          <Text style={styles.cardPrice}>₹{price}</Text>
-          {originalPrice && (
-            <Text style={styles.cardOriginalPrice}>₹{originalPrice}</Text>
-          )}
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-};
 
 // ─── Main Screen Component ────────────────────────────────────────────────────
 
@@ -156,13 +113,21 @@ export default function HomeScreen() {
 
   // ── Handle incoming category navigation ───────────────────────────────────
   useEffect(() => {
+    console.log("Category received:", category);
+
     if (category) {
-      setSelectedCategory(category as string);
-      setTimeout(() => {
-        // Scroll down slightly to show products when coming from categories screen
-        scrollRef.current?.scrollTo({ y: 550, animated: true });
-      }, 400);
+      setSelectedCategory(category.toString());
+    } else {
+      setSelectedCategory("All");
     }
+
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: 550,
+        animated: true,
+      });
+    }, 400);
+
   }, [category]);
 
   useFocusEffect(
@@ -206,7 +171,9 @@ export default function HomeScreen() {
         setLatestOrder(null);
       }
     } catch (error) {
-      console.log('Order fetch error:', error);
+      if (__DEV__) {
+        console.log(error);
+      }
       setLatestOrder(null);
     }
   };
@@ -218,7 +185,7 @@ export default function HomeScreen() {
       const data = await res.json();
       if (Array.isArray(data)) setProducts(data);
     } catch (error) {
-      console.log('Products fetch error:', error);
+      console.error("Failed to load products:", error);
     } finally {
       setLoadingProducts(false);
     }
@@ -232,17 +199,25 @@ export default function HomeScreen() {
       const data = await res.json();
       if (Array.isArray(data)) setProducts(data);
     } catch (error) {
-      console.log('Search error:', error);
+      console.error('Search error:', error);
     }
+
   };
 
-  // ── Derived State ─────────────────────────────────────────────────────────
-  const filteredProducts =
-    selectedCategory === 'All'
-      ? products
-      : products.filter(
-        (item) => item.category?.toLowerCase() === selectedCategory.toLowerCase()
-      );
+
+  const filteredProducts = products.filter((item) => {
+    if (selectedCategory === "All") return true;
+
+    const productCategory = String(item.category || "")
+      .trim()
+      .toLowerCase();
+
+    const currentCategory = String(selectedCategory)
+      .trim()
+      .toLowerCase();
+
+    return productCategory.includes(currentCategory);
+  });
 
   const banner = BANNERS[activeIndex];
   const normalizedOrderStatus = latestOrder?.status?.toLowerCase().trim();
@@ -251,9 +226,9 @@ export default function HomeScreen() {
     normalizedOrderStatus !== 'delivered' &&
     normalizedOrderStatus !== 'cancelled';
 
-  // ── Route to Categories Screen function ───────────────────────────────────
+
   const goToCategories = () => {
-    router.push('/screens/CategoriesScreen'); // Update path if your screen is named differently
+    router.push('/screens/CategoriesScreen');
   };
 
   // ── Render ────────────────────────────────────────────────────────────────

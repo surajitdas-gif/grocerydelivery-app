@@ -114,10 +114,6 @@ export default function AddressForm() {
         const data =
           await res.json();
 
-        console.log(
-          "📦 SAVED ADDRESS:",
-          data
-        );
 
         // AUTO FILL
 
@@ -159,11 +155,9 @@ export default function AddressForm() {
         }
 
       } catch (error) {
-
-        console.log(
-          "Address load error:",
-          error
-        );
+        if (__DEV__) {
+          console.log(error);
+        }
       }
 
       setLoading(false);
@@ -239,13 +233,10 @@ export default function AddressForm() {
           }
         );
 
-        console.log(
-          "📤 ADDRESS SAVED"
-        );
 
-        // ========================================
+
         // GO TO PAYMENT
-        // ========================================
+
 
         router.replace({
 
@@ -273,21 +264,18 @@ export default function AddressForm() {
         });
 
       } catch (error) {
-
-        console.log(
-          "Address save error:",
-          error
-        );
-
+        if (__DEV__) {
+          console.log(error);
+        }
         Alert.alert(
           "Address save failed"
         );
       }
     };
 
-  // ============================================
+
   // LOADING
-  // ============================================
+
 
   if (loading) {
 
@@ -305,9 +293,7 @@ export default function AddressForm() {
     );
   }
 
-  // ============================================
-  // UI
-  // ============================================
+
 
   return (
 

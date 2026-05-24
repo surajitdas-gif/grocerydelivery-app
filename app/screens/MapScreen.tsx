@@ -1,29 +1,16 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Image,
-  StatusBar,
-  TouchableOpacity,
-} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import {
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useCart } from '../../src/context/CartContext';
 
-const STATUS_CONFIG: Record<string, any> = {
-  delivered: { bg: '#f0fdf4', text: '#15803d', dot: '#22c55e' },
-  pending: { bg: '#fffbeb', text: '#b45309', dot: '#f59e0b' },
-  processing: { bg: '#eff6ff', text: '#1d4ed8', dot: '#3b82f6' },
-  cancelled: { bg: '#fef2f2', text: '#dc2626', dot: '#ef4444' },
-  shipped: { bg: '#f0fdf4', text: '#0369a1', dot: '#0ea5e9' },
-};
-
-const getStatusConfig = (status: string) => {
-  const key = status?.toLowerCase() || 'pending';
-  return STATUS_CONFIG[key] || STATUS_CONFIG['pending'];
-};
 
 export default function OrdersScreen() {
   const [backendOrders, setBackendOrders] = useState<any[]>([]);
@@ -50,7 +37,9 @@ export default function OrdersScreen() {
 
       setBackendOrders(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.log(error);
+      if (__DEV__) {
+        console.log(error);
+      }
     }
   };
 
@@ -62,7 +51,7 @@ export default function OrdersScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {finalOrders.map((order: any, index: number) => {
-          const cfg = getStatusConfig(order.status);
+
 
           return (
             <View key={index} style={styles.orderCard}>

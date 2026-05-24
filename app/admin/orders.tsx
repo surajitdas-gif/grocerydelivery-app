@@ -28,10 +28,9 @@ export default function AdminOrders() {
   // ==========================================
 
   useEffect(() => {
-
     fetchOrders();
-
   }, []);
+
 
   const fetchOrders =
     async () => {
@@ -50,7 +49,9 @@ export default function AdminOrders() {
 
       } catch (error) {
 
-        console.log(error);
+        if (__DEV__) {
+          console.log(error);
+        }
 
       } finally {
 
@@ -62,11 +63,11 @@ export default function AdminOrders() {
   // UPDATE STATUS
   // ==========================================
 
- const updateStatus =
-  async (
-    id: string,
-    status: string
-  ) => {
+  const updateStatus =
+    async (
+      id: string,
+      status: string
+    ) => {
 
       try {
 
@@ -92,11 +93,22 @@ export default function AdminOrders() {
           'Order Updated'
         );
 
-        fetchOrders();
+        setOrders(prev =>
+          prev.map(order =>
+            order._id === id
+              ? {
+                ...order,
+                status: status
+              }
+              : order
+          )
+        );
 
       } catch (error) {
 
-        console.log(error);
+        if (__DEV__) {
+          console.log(error);
+        }
       }
     };
 
@@ -133,8 +145,8 @@ export default function AdminOrders() {
 
       <FlatList
         data={orders}
-        keyExtractor={(item) =>
-          item._id
+        keyExtractor={(item, index) =>
+          item._id || index.toString()
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
@@ -171,6 +183,7 @@ export default function AdminOrders() {
               <TouchableOpacity
                 style={styles.prepareBtn}
                 onPress={() =>
+                  item._id &&
                   updateStatus(
                     item._id,
                     'Preparing'
@@ -187,22 +200,22 @@ export default function AdminOrders() {
               <TouchableOpacity
                 style={styles.outBtn}
                 onPress={() =>
+                  item._id &&
                   updateStatus(
                     item._id,
                     'Out for Delivery'
                   )
                 }
               >
-
                 <Text style={styles.btnText}>
                   Out
                 </Text>
-
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.doneBtn}
                 onPress={() =>
+                  item._id &&
                   updateStatus(
                     item._id,
                     'Delivered'

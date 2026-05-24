@@ -154,6 +154,18 @@ function ProductCard({
   );
 }
 
+const FILTERS = [
+  'All',
+  'Vegetables',
+  'Fruits',
+  'Milk',
+  'Snacks',
+  'Grains',
+  'Eggs',
+  'Cleaning',
+  'Others',
+];
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
@@ -163,6 +175,7 @@ export default function AdminDashboard() {
   const [image, setImage] = useState('');
   const [category, setCategory] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [editId, setEditId] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -429,13 +442,102 @@ export default function AdminDashboard() {
           </View>
         </View>
 
-        {products.map((item, index) => (
-          <ProductCard
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 15 }}
+        >
+          {FILTERS.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              onPress={() => setSelectedCategory(cat)}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                marginRight: 8,
+                borderRadius: 20,
+                backgroundColor:
+                  selectedCategory === cat
+                    ? GOLD
+                    : SURFACE,
+              }}
+            >
+              <Text
+                style={{
+                  color:
+                    selectedCategory === cat
+                      ? '#fff'
+                      : INK,
+                  fontWeight: '700',
+                }}
+              >
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {(
+          selectedCategory === 'All'
+            ? products
+            : products.filter(
+              p =>
+                p.category?.toLowerCase() ===
+                selectedCategory.toLowerCase()
+            )
+        ).map((item, index) => (
+
+          <View
             key={item._id ?? index}
-            item={item}
-            onEdit={editProduct}
-            onDelete={deleteProduct}
-          />
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#fff',
+              padding: 12,
+              borderRadius: 12,
+              marginBottom: 10
+            }}
+          >
+
+            <Image
+              source={{ uri: item.image }}
+              style={{
+                width: 55,
+                height: 55,
+                borderRadius: 8
+              }}
+            />
+
+            <View
+              style={{
+                flex: 1,
+                marginLeft: 10
+              }}
+            >
+              <Text>{item.name}</Text>
+              <Text>{item.category}</Text>
+            </View>
+
+            <Text>₹{item.price}</Text>
+
+            <TouchableOpacity
+              onPress={() => editProduct(item)}
+              style={{ marginLeft: 10 }}
+            >
+              <Text>✏</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() =>
+                deleteProduct(item._id || '')
+              }
+              style={{ marginLeft: 10 }}
+            >
+              <Text>🗑</Text>
+            </TouchableOpacity>
+
+          </View>
+
         ))}
 
         <View style={{ height: 48 }} />

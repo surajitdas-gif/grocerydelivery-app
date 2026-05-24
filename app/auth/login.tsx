@@ -1,24 +1,24 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Alert,
-  Animated,
-  StatusBar,
-  ActivityIndicator,
-} from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-const BASE_URL = "http://172.20.10.3:5000"; // ✅ your backend IP
+const BASE_URL = 'http://172.20.10.3:5000'; // ✅ your backend IP
 
 const ROLES = [
   { key: 'user', label: 'Customer', emoji: '🛍️' },
@@ -27,100 +27,276 @@ const ROLES = [
 ];
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPass, setShowPass] = useState(false);
+  const [phone, setPhone] =
+    useState('');
+
+  const [otp, setOtp] =
+    useState('');
+
+  const [otpSent, setOtpSent] =
+    useState(false);
+
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('user'); // ✅ added
+  const [selectedRole, setSelectedRole] = useState('user');
 
   const btnScale = useRef(new Animated.Value(1)).current;
 
+
+  useEffect(() => {
+
+    const checkLogin = async () => {
+
+      const token =
+        await AsyncStorage.getItem(
+          'token'
+        );
+
+      const userRole =
+        await AsyncStorage.getItem(
+          'userRole'
+        );
+
+      if (token) {
+
+        switch (userRole) {
+
+          case 'user':
+
+            router.replace(
+              '/(tabs)/home'
+            );
+
+            break;
+
+          case 'delivery':
+
+            router.replace(
+              '/delivery/dashboard'
+            );
+
+            break;
+
+          case 'admin':
+
+            router.replace(
+              '/admin/dashboard'
+            );
+
+            break;
+
+          default:
+
+            router.replace(
+              '/(tabs)/home'
+            );
+
+        }
+
+      }
+
+    };
+
+    checkLogin();
+
+  }, []);
   const animateButton = () => {
     Animated.sequence([
       Animated.spring(btnScale, { toValue: 0.96, useNativeDriver: true }),
       Animated.spring(btnScale, { toValue: 1, useNativeDriver: true }),
     ]).start();
   };
-
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Missing Fields', 'Please enter email and password');
-      return;
-    }
-
-    animateButton();
-    setLoading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role: selectedRole }), // ✅ send role
-      });
 
-      const data = await response.json();
+      animateButton();
 
-      if (response.ok) {
-        await AsyncStorage.setItem('token', data.token);
+      setLoading(true);
 
-        const userRole = data.user?.role || data.role;
+      if (!otpSent) {
 
-        Alert.alert('Success ✅', 'Login successful');
+        if (phone.length !== 10) {
 
-        setTimeout(async () => {
-          if (userRole === 'user') {
-            await AsyncStorage.setItem('user', JSON.stringify(data.user));
-            await AsyncStorage.removeItem('deliveryUser');
-            await AsyncStorage.removeItem('adminUser');
-            router.replace('/(tabs)/home');
-          }
+          Alert.alert(
+            'Invalid',
+            'Enter valid phone number'
+          );
 
-          // if (userRole === 'delivery') {
-          //   await AsyncStorage.setItem('deliveryUser', JSON.stringify(data.user));
-          //   await AsyncStorage.removeItem('user');
-          //   await AsyncStorage.removeItem('adminUser');
-          //   router.replace('/delivery/dashboard');
-          // }
-          if (userRole === 'delivery') {
+          return;
 
-  // ✅ IMPORTANT FIX
-  await AsyncStorage.setItem(
-    'user',
-    JSON.stringify(data.user)
-  );
+        }
 
-  // optional separate storage
-  await AsyncStorage.setItem(
-    'deliveryUser',
-    JSON.stringify(data.user)
-  );
+        const response =
+          await fetch(
+            `${BASE_URL}/api/send-otp`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+              body: JSON.stringify({
+                phone: phone
+              })
+            }
+          );
 
-  await AsyncStorage.removeItem('adminUser');
+        const text = await response.text();
 
-  console.log(
-    "✅ DELIVERY USER SAVED:",
-    data.user
-  );
+        console.log("SERVER RESPONSE:", text);
 
-  router.replace('/delivery/dashboard');
-}
+        let data;
 
-          if (userRole === 'admin') {
-            await AsyncStorage.setItem('adminUser', JSON.stringify(data.user));
-            await AsyncStorage.removeItem('user');
-            await AsyncStorage.removeItem('deliveryUser');
-            router.replace('/admin/dashboard');
-          }
-        }, 1000);
-      } else {
-        Alert.alert('Login Failed ❌', data.message);
+        try {
+
+          data = JSON.parse(text);
+
+        }
+        catch {
+
+          Alert.alert(
+            "Server Error ❌",
+            text
+          );
+
+          return;
+
+        }
+
+        if (!response.ok) {
+
+          Alert.alert(
+            'Error ❌',
+            data.message
+          );
+
+          return;
+        }
+
+        setOtpSent(true);
+
+        Alert.alert(
+          'Success ✅',
+          'OTP sent'
+        );
+
       }
-    } catch (error) {
-      Alert.alert('Error ❌', String(error));
-    } finally {
-      setLoading(false);
+
+      else {
+
+        const response =
+          await fetch(
+
+            `${BASE_URL}/api/login-with-otp`,
+
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+
+              body: JSON.stringify({
+
+                phone: phone,
+                otp
+
+              })
+
+            }
+
+          );
+
+        const text = await response.text();
+
+        console.log(
+          "LOGIN RESPONSE:",
+          text
+        );
+
+        let data;
+
+        try {
+
+          data = JSON.parse(text);
+
+        }
+        catch {
+
+          Alert.alert(
+            "Server Error ❌",
+            text
+          );
+
+          return;
+
+        }
+
+        if (!response.ok) {
+
+          Alert.alert(
+            "Login Failed ❌",
+            data.message
+          );
+
+          return;
+
+        }
+        const userRole =
+          data.user?.role;
+
+        await AsyncStorage.multiSet([
+          ['token', data.token],
+          ['user', JSON.stringify(data.user)],
+          ['userRole', userRole]
+        ]);
+
+        if (userRole === 'user') {
+
+          router.replace(
+            '/(tabs)/home'
+          );
+
+        }
+
+        if (userRole === 'delivery') {
+
+          router.replace(
+            '/delivery/dashboard'
+          );
+
+        }
+
+        if (userRole === 'admin') {
+
+          router.replace(
+            '/admin/dashboard'
+          );
+
+        }
+
+      }
+
     }
+    catch (error: any) {
+
+      console.error(error);
+
+      Alert.alert(
+        'Error ❌',
+        'Network request failed'
+      );
+
+    }
+    finally {
+
+      setLoading(false);
+
+    }
+
   };
+
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -130,7 +306,10 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.hero}>
             <Text style={styles.logo}>🛒</Text>
             <Text style={styles.brand}>FreshCart</Text>
@@ -140,67 +319,60 @@ export default function LoginScreen() {
           <View style={styles.card}>
             <Text style={styles.title}>Welcome Back 👋</Text>
 
-            {/* Email */}
-            <View style={styles.inputWrap}>
-              <Text>📧</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-              />
-            </View>
-
-            {/* Password */}
-            <View style={styles.inputWrap}>
-              <Text>🔒</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                secureTextEntry={!showPass}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <TouchableOpacity onPress={() => setShowPass(!showPass)}>
-                <Text>{showPass ? '🙈' : '👁️'}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* ✅ ROLE SELECTION UI */}
-            <View style={{ marginBottom: 15 }}>
-              <Text style={{ fontWeight: '700', marginBottom: 10 }}>
-                Select Role
-              </Text>
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                {ROLES.map(role => (
-                  <TouchableOpacity
-                    key={role.key}
-                    onPress={() => setSelectedRole(role.key)}
-                    style={{
-                      flex: 1,
-                      marginHorizontal: 5,
-                      padding: 12,
-                      borderRadius: 10,
-                      alignItems: 'center',
-                      backgroundColor:
-                        selectedRole === role.key ? '#1a4731' : '#f3f4f6',
-                    }}
+            {/* Role selector */}
+            <View style={styles.roleRow}>
+              {ROLES.map((r) => (
+                <TouchableOpacity
+                  key={r.key}
+                  style={[styles.roleTab, selectedRole === r.key && styles.roleTabActive]}
+                  onPress={() => setSelectedRole(r.key)}
+                >
+                  <Text style={styles.roleEmoji}>{r.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.roleLabel,
+                      selectedRole === r.key && styles.roleLabelActive,
+                    ]}
                   >
-                    <Text style={{ fontSize: 18 }}>{role.emoji}</Text>
-                    <Text
-                      style={{
-                        color: selectedRole === role.key ? '#fff' : '#000',
-                        fontWeight: '600',
-                      }}
-                    >
-                      {role.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    {r.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
+
+
+            <View style={styles.inputWrap}>
+              <Text style={styles.icon}>📱</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Phone Number"
+                value={phone}
+                onChangeText={(t) =>
+                  setPhone(
+                    t.replace(/[^0-9]/g, '').slice(0, 10)
+                  )
+                }
+                keyboardType="phone-pad"
+                maxLength={10}
+              />
+            </View>
+
+            {otpSent && (
+              <View style={styles.inputWrap}>
+                <Text style={styles.icon}>🔐</Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChangeText={setOtp}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                />
+              </View>
+            )}
+
 
             {/* Login Button */}
             <Animated.View style={{ transform: [{ scale: btnScale }] }}>
@@ -215,15 +387,17 @@ export default function LoginScreen() {
                     <Text style={styles.loginText}>Signing In...</Text>
                   </View>
                 ) : (
-                  <Text style={styles.loginText}>Sign In</Text>
+                  <Text style={styles.loginText}>
+                    {otpSent
+                      ? 'Verify & Login'
+                      : 'Send OTP'}
+                  </Text>
                 )}
               </TouchableOpacity>
             </Animated.View>
 
             <TouchableOpacity onPress={() => router.push('/auth/signup')}>
-              <Text style={styles.signup}>
-                Don't have account? Sign Up
-              </Text>
+              <Text style={styles.signup}>Don't have an account? Sign Up</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -249,17 +423,32 @@ const styles = StyleSheet.create({
 
   title: { fontSize: 24, fontWeight: '800', marginBottom: 20 },
 
+  roleRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
+  roleTab: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+  },
+  roleTabActive: { backgroundColor: '#1a4731' },
+  roleEmoji: { fontSize: 18 },
+  roleLabel: { fontSize: 12, fontWeight: '700' },
+  roleLabelActive: { color: '#fff' },
+
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f8fafc',
     paddingHorizontal: 15,
     borderRadius: 14,
     marginBottom: 15,
     height: 55,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
-
-  input: { flex: 1, marginLeft: 10 },
+  icon: { marginRight: 10 },
+  input: { flex: 1 },
 
   loginBtn: {
     backgroundColor: '#1a4731',
@@ -268,8 +457,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-
-  loginText: { color: '#fff', fontWeight: '800' },
+  loginText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 
   signup: {
     marginTop: 25,
@@ -284,3 +472,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+
