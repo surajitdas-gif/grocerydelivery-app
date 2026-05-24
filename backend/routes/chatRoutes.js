@@ -5,22 +5,14 @@ const router =
 express.Router();
 
 const {
-
-getUserAddress,
-saveAddress
-
+chatBot
 } = require(
-"../controllers/addressController"
-);
-
-router.get(
-"/:userId",
-getUserAddress
+"../controllers/chatController"
 );
 
 router.post(
-"/save",
-saveAddress
+"/",
+chatBot
 );
 
 module.exports =

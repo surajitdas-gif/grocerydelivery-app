@@ -28,16 +28,58 @@ import { router, useFocusEffect } from 'expo-router';
 const BASE_URL = "http://172.20.10.3:5000";
 const { width } = Dimensions.get('window');
 
-// ── Status config ─────────────────────────────────────────────────────────────
-const STATUS_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
-  'Pending': { color: '#92400e', bg: '#fef3c7', dot: '#f59e0b' },
-  'Preparing': { color: '#1e40af', bg: '#dbeafe', dot: '#3b82f6' },
-  'Out for Delivery': { color: '#065f46', bg: '#d1fae5', dot: '#10b981' },
-  'Delivered': { color: '#166534', bg: '#dcfce7', dot: '#22c55e' },
+const STATUS_CONFIG: Record<
+  string,
+  {
+    color: string;
+    bg: string;
+    dot: string;
+  }
+> = {
+
+  Pending: {
+    color: "#92400e",
+    bg: "#fef3c7",
+    dot: "#f59e0b"
+  },
+
+  Preparing: {
+    color: "#1e40af",
+    bg: "#dbeafe",
+    dot: "#3b82f6"
+  },
+
+  "Out for Delivery": {
+    color: "#065f46",
+    bg: "#d1fae5",
+    dot: "#10b981"
+  },
+
+  Delivered: {
+    color: "#166534",
+    bg: "#dcfce7",
+    dot: "#22c55e"
+  },
+
+  Cancelled: {
+    color: "#991b1b",
+    bg: "#fee2e2",
+    dot: "#ef4444"
+  }
+
 };
 
-const getStatusStyle = (status: string) =>
-  STATUS_CONFIG[status] ?? { color: '#374151', bg: '#f3f4f6', dot: '#9ca3af' };
+const getStatusStyle =
+  (status: string) =>
+
+    STATUS_CONFIG[status]
+    ??
+
+    {
+      color: "#374151",
+      bg: "#f3f4f6",
+      dot: "#9ca3af"
+    };
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -495,6 +537,49 @@ export default function DeliveryDashboard() {
                       Delivered
                     </Text>
                   </TouchableOpacity>
+                  {/* CANCEL */}
+
+                  <TouchableOpacity
+                    style={[
+                      styles.statusBtn,
+                      styles.cancelBtn,
+                      (
+                        order.status === "Delivered" ||
+                        order.status === "Cancelled"
+                      ) && styles.disabledBtn
+                    ]}
+
+                    disabled={
+                      order.status === "Delivered" ||
+                      order.status === "Cancelled"
+                    }
+
+                    onPress={() =>
+                      updateStatus(
+                        order._id,
+                        "Cancelled"
+                      )
+                    }
+
+                    activeOpacity={0.8}
+                  >
+
+                    <Text style={styles.statusBtnIcon}>
+                      ❌
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.statusBtnLabel,
+                        {
+                          color: "#991b1b"
+                        }
+                      ]}
+                    >
+                      Cancel
+                    </Text>
+
+                  </TouchableOpacity>
 
                 </View>
               </View>
@@ -847,6 +932,9 @@ const styles = StyleSheet.create({
 
   statusBtnGreen: {
     backgroundColor: '#dcfce7',
+  },
+  cancelBtn: {
+    backgroundColor: '#fee2e2',
   },
 
   statusBtnIcon: {

@@ -380,14 +380,16 @@ export default function TrackOrder() {
 
   const BASE_URL =
     "http://172.20.10.3:5000";
+    const GOOGLE_MAPS_APIKEY =
+process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  const GOOGLE_MAPS_APIKEY =
-    "AIzaSyB34LD_TXtjI8pWB5NguZ_zetFErX9ywGY";
-
-
-  // ======================================================
+console.log(
+"MAP KEY:",
+GOOGLE_MAPS_APIKEY
+);
+  
   // ANIMATE MARKER
-  // ======================================================
+  
 
   const animateMarker = (
     lat: number,

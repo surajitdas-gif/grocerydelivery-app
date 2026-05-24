@@ -1,82 +1,46 @@
-const express = require('express');
-const router = express.Router();
-const Product = require('../models/Product');
+const express =
+require("express");
 
-router.post('/add-product', async (req, res) => {
-  try {
-    const product = new Product(req.body);
+const router =
+express.Router();
 
-    await product.save();
+const {
 
-    res.json({
-      message: 'Product added',
-      product,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
+addProduct,
+searchProduct,
+getAllProducts,
+deleteProduct,
+updateProduct
 
- router.get('/search/:keyword', async (req, res) => {
-  try {
-    const products = await Product.find({
-      name: {
-        $regex: req.params.keyword,
-        $options: 'i',
-      },
-    });
+} =
+require(
+"../controllers/productController"
+);
 
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
+router.post(
+"/add-product",
+addProduct
+);
 
-router.get('/all-products', async (req, res) => {
-  try {
-    const products = await Product.find();
+router.get(
+"/search/:keyword",
+searchProduct
+);
 
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
+router.get(
+"/all-products",
+getAllProducts
+);
 
-router.delete('/delete-product/:id', async (req, res) => {
-  try {
-    await Product.findByIdAndDelete(req.params.id);
+router.delete(
+"/delete-product/:id",
+deleteProduct
+);
 
-    res.json({
-      message: 'Deleted successfully',
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
+router.put(
+"/update-product/:id",
+updateProduct
+);
 
-router.put('/update-product/:id', async (req, res) => {
-  try {
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
-
-
-module.exports = router;
+module.exports =
+router;

@@ -1,8 +1,7 @@
 
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -12,34 +11,130 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useCart } from '../../src/context/CartContext';
+import { io } from "socket.io-client";
 
 // ── Status config ─────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<string, { bg: string; text: string; dot: string; icon: string }> = {
-  delivered: { bg: '#f0fdf4', text: '#15803d', dot: '#22c55e', icon: '✓' },
-  pending: { bg: '#fffbeb', text: '#b45309', dot: '#f59e0b', icon: '⏳' },
-  processing: { bg: '#eff6ff', text: '#1d4ed8', dot: '#3b82f6', icon: '⚙' },
-  cancelled: { bg: '#fef2f2', text: '#dc2626', dot: '#ef4444', icon: '✕' },
-  shipped: { bg: '#f0fdf4', text: '#0369a1', dot: '#0ea5e9', icon: '🚚' },
+const STATUS_CONFIG: Record<
+  string,
+  {
+    bg: string;
+    text: string;
+    dot: string;
+    icon: string;
+  }
+> = {
+
+  Preparing: {
+    bg: "#eff6ff",
+    text: "#1d4ed8",
+    dot: "#3b82f6",
+    icon: "⚙"
+  },
+
+  Pending: {
+    bg: "#fffbeb",
+    text: "#b45309",
+    dot: "#f59e0b",
+    icon: "⏳"
+  },
+
+  "Out for Delivery": {
+    bg: "#f0fdf4",
+    text: "#0369a1",
+    dot: "#0ea5e9",
+    icon: "🚚"
+  },
+
+  Delivered: {
+    bg: "#f0fdf4",
+    text: "#15803d",
+    dot: "#22c55e",
+    icon: "✓"
+  },
+
+  Cancelled: {
+    bg: "#fef2f2",
+    text: "#dc2626",
+    dot: "#ef4444",
+    icon: "✕"
+  }
+
 };
 
-const getStatusConfig = (status: string) => {
-  const key = status?.toLowerCase() || 'pending';
-  return STATUS_CONFIG[key] || STATUS_CONFIG['pending'];
-};
+const getStatusConfig =
+  (status: string) => {
 
+    return STATUS_CONFIG[
+      status
+    ]
+      ||
+      STATUS_CONFIG[
+      "Pending"
+      ];
+
+  };
+const socket = io(
+  "http://172.20.10.3:5000",
+  {
+    transports: ["websocket"]
+  }
+);
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function OrdersScreen() {
   const [backendOrders, setBackendOrders] = useState<any[]>([]);
-  const { orders } = useCart();
+
 
   useFocusEffect(
     useCallback(() => {
       loadOrders();
     }, [])
   );
+
+  useEffect(() => {
+
+    const handleOrderUpdate =
+      (updatedOrder: any) => {
+
+        setBackendOrders(
+          (prev) =>
+
+            prev.map(
+              (order) =>
+
+                order._id ===
+                  updatedOrder._id
+
+                  ?
+
+                  updatedOrder
+
+                  :
+
+                  order
+
+            )
+
+        );
+
+      };
+
+    socket.on(
+      "orderUpdated",
+      handleOrderUpdate
+    );
+
+    return () => {
+
+      socket.off(
+        "orderUpdated",
+        handleOrderUpdate
+      );
+
+    };
+
+  }, []);
 
   const loadOrders = async () => {
     try {
@@ -77,11 +172,14 @@ export default function OrdersScreen() {
       setBackendOrders([]);
     }
   };
-
-  const finalOrders = [
-    ...(Array.isArray(backendOrders) ? backendOrders : []),
-    ...(Array.isArray(orders) ? orders : []),
-  ];
+  const finalOrders =
+    Array.isArray(
+      backendOrders
+    )
+      ?
+      backendOrders
+      :
+      [];
 
   return (
     <View style={styles.root}>
