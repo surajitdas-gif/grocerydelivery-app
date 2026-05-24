@@ -175,7 +175,7 @@ data?.candidates?.[0]
 data?.promptFeedback
 ?.blockReason ||
 
-"I couldn't generate a response";
+"Pepper couldn't answer right now 🌿 Please ask again in a moment.";
 
 
 // SEND RESPONSE
