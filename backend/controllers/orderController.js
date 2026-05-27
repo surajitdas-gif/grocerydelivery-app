@@ -36,24 +36,24 @@ const placeOrder = async (req, res) => {
       address: address || "",
 
       paymentMethod:
-      paymentMethod || "UPI",
+        paymentMethod || "UPI",
 
       status: "Preparing",
 
       userLocation:
-      userLocation || {
-        lat: 0,
-        lng: 0
-      },
+        userLocation || {
+          lat: 0,
+          lng: 0
+        },
 
       customerName:
-      customerName || "",
+        customerName || "",
 
       customerPhone:
-      customerPhone || "",
+        customerPhone || "",
 
       customerAltPhone:
-      customerAltPhone || "",
+        customerAltPhone || "",
 
       deliveryBoy: "",
       deliveryPhone: "",
@@ -69,7 +69,7 @@ const placeOrder = async (req, res) => {
     await newOrder.save();
 
     const io =
-    req.app.get("io");
+      req.app.get("io");
 
     if (io) {
 
@@ -101,402 +101,413 @@ const placeOrder = async (req, res) => {
 
 // ALL ORDERS
 const getAllOrders =
-async (req, res) => {
+  async (req, res) => {
 
-  try {
+    try {
 
-    const orders =
-    await Order.find()
-    .sort({
-      createdAt: -1
-    });
+      const orders =
+        await Order.find()
+          .sort({
+            createdAt: -1
+          });
 
-    res.json(
-      orders
-    );
+      res.json(
+        orders
+      );
 
-  }
+    }
 
-  catch (error) {
+    catch (error) {
 
-    res.status(500).json({
-      message: error.message
-    });
+      res.status(500).json({
+        message: error.message
+      });
 
-  }
+    }
 
-};
+  };
 
 
 // UPDATE STATUS
 const updateStatus =
-async (req, res) => {
+  async (req, res) => {
 
-try{
+    try {
 
-const {
-status,
-deliveryBoyId
-}=req.body;
+      const {
+        status,
+        deliveryBoyId
+      } = req.body;
 
-const existingOrder =
-await Order.findById(
-req.params.id
-);
+      const existingOrder =
+        await Order.findById(
+          req.params.id
+        );
 
-if(!existingOrder){
+      if (!existingOrder) {
 
-return res.status(404)
-.json({
-message:"Order not found"
-});
+        return res.status(404)
+          .json({
+            message: "Order not found"
+          });
 
-}
-
-
-// Delivered / Cancelled
-if(
-status==="Delivered"
-||
-status==="Cancelled"
-){
-
-const updatedOrder =
-await Order.findByIdAndUpdate(
-
-req.params.id,
-
-{
-status
-},
-
-{
-new:true
-}
-
-);
-
-const io =
-req.app.get("io");
-
-if(io){
-
-io.emit(
-"orderUpdated",
-updatedOrder
-);
-
-}
-
-return res.json(
-updatedOrder
-);
-
-}
+      }
 
 
-// Delivery assignment
-let deliveryData={};
+      // Delivered / Cancelled
+      if (
+        status === "Delivered"
+        ||
+        status === "Cancelled"
+      ) {
 
-if(deliveryBoyId){
+        if (
+          isNaN(lat) ||
+          isNaN(lng)
+        ) {
 
-const user =
-await User.findById(
-deliveryBoyId
-);
+          return res.status(400).json({
+            message:
+              "Invalid coordinates"
+          });
+        }
 
-if(user){
+        const updatedOrder =
+          await Order.findByIdAndUpdate(
 
-deliveryData={
+            req.params.id,
 
-deliveryBoyId,
+            {
+              status
+            },
 
-deliveryBoy:
-user.name || "",
+            {
+              new: true
+            }
 
-deliveryPhone:
-user.phone || ""
+          );
 
-};
+        const io =
+          req.app.get("io");
 
-}
+        if (io) {
 
-}
+          io.emit(
+            "orderUpdated",
+            updatedOrder
+          );
+
+        }
+
+        return res.json(
+          updatedOrder
+        );
+
+      }
 
 
-const updatedOrder =
-await Order.findByIdAndUpdate(
+      // Delivery assignment
+      let deliveryData = {};
 
-req.params.id,
+      if (deliveryBoyId) {
 
-{
-status,
-...deliveryData
-},
+        const user =
+          await User.findById(
+            deliveryBoyId
+          );
 
-{
-new:true
-}
+        if (user) {
 
-);
+          deliveryData = {
 
-const io =
-req.app.get("io");
+            deliveryBoyId,
 
-if(io){
+            deliveryBoy:
+              user.name || "",
 
-io.emit(
-"orderUpdated",
-updatedOrder
-);
+            deliveryPhone:
+              user.phone || ""
 
-}
+          };
 
-res.json(
-updatedOrder
-);
+        }
 
-}
+      }
 
-catch(error){
 
-res.status(500)
-.json({
-message:error.message
-});
+      const updatedOrder =
+        await Order.findByIdAndUpdate(
 
-}
+          req.params.id,
 
-};
+          {
+            status,
+            ...deliveryData
+          },
+
+          {
+            new: true
+          }
+
+        );
+
+      const io =
+        req.app.get("io");
+
+      if (io) {
+
+        io.emit(
+          "orderUpdated",
+          updatedOrder
+        );
+
+      }
+
+      res.json(
+        updatedOrder
+      );
+
+    }
+
+    catch (error) {
+
+      res.status(500)
+        .json({
+          message: error.message
+        });
+
+    }
+
+  };
 
 
 // UPDATE DELIVERY LOCATION
 const updateLocation =
-async(req,res)=>{
+  async (req, res) => {
 
-try{
+    try {
 
-const lat =
-Number(req.body.lat);
+      const lat =
+        Number(req.body.lat);
 
-const lng =
-Number(req.body.lng);
+      const lng =
+        Number(req.body.lng);
 
-const updatedOrder =
-await Order.findByIdAndUpdate(
+      const updatedOrder =
+        await Order.findByIdAndUpdate(
 
-req.params.id,
+          req.params.id,
 
-{
-deliveryLocation:{
-lat,
-lng
-}
-},
+          {
+            deliveryLocation: {
+              lat,
+              lng
+            }
+          },
 
-{
-new:true
-}
+          {
+            new: true
+          }
 
-);
+        );
 
-const io =
-req.app.get("io");
+      const io =
+        req.app.get("io");
 
-if(io){
+      if (io) {
 
-io.emit(
-"locationUpdated",
-{
-orderId:req.params.id,
+        io.emit(
+          "locationUpdated",
+          {
+            orderId: req.params.id,
 
-location:{
-lat,
-lng
-}
-}
-);
+            location: {
+              lat,
+              lng
+            }
+          }
+        );
 
-}
+      }
 
-res.json(
-updatedOrder
-);
+      res.json(
+        updatedOrder
+      );
 
-}
+    }
 
-catch(error){
+    catch (error) {
 
-res.status(500)
-.json({
-message:error.message
-});
+      res.status(500)
+        .json({
+          message: error.message
+        });
 
-}
+    }
 
-};
+  };
 
 
 // TRACK ORDER
 const trackOrder =
-async(req,res)=>{
+  async (req, res) => {
 
-try{
+    try {
 
-const order =
-await Order.findById(
-req.params.id
-);
+      const order =
+        await Order.findById(
+          req.params.id
+        );
 
-if(!order){
+      if (!order) {
 
-return res.status(404)
-.json({
-message:"Order not found"
-});
+        return res.status(404)
+          .json({
+            message: "Order not found"
+          });
 
-}
+      }
 
-res.json({
+      res.json({
 
-deliveryLocation:
-order.deliveryLocation,
+        deliveryLocation:
+          order.deliveryLocation,
 
-status:
-order.status,
+        status:
+          order.status,
 
-userLocation:
-order.userLocation
+        userLocation:
+          order.userLocation
 
-});
+      });
 
-}
+    }
 
-catch(error){
+    catch (error) {
 
-res.status(500)
-.json({
-message:error.message
-});
+      res.status(500)
+        .json({
+          message: error.message
+        });
 
-}
+    }
 
-};
+  };
 
 
 // MY ORDERS
 const getMyOrders =
-async(req,res)=>{
+  async (req, res) => {
 
-try{
+    try {
 
-const orders =
-await Order.find({
+      const orders =
+        await Order.find({
 
-userId:
-req.params.userId
+          userId:
+            req.params.userId
 
-})
-.sort({
-createdAt:-1
-});
+        })
+          .sort({
+            createdAt: -1
+          });
 
 
-// REMOVE DUPLICATES
-const uniqueOrders =
-Array.from(
+      // REMOVE DUPLICATES
+      const uniqueOrders =
+        Array.from(
 
-new Map(
+          new Map(
 
-orders.map(
-order=>[
-order._id.toString(),
-order
-]
-)
+            orders.map(
+              order => [
+                order._id.toString(),
+                order
+              ]
+            )
 
-).values()
+          ).values()
 
-);
+        );
 
-res.json({
+      res.json({
 
-success:true,
-orders:uniqueOrders
+        success: true,
+        orders: uniqueOrders
 
-});
+      });
 
-}
+    }
 
-catch(error){
+    catch (error) {
 
-res.status(500)
-.json({
+      res.status(500)
+        .json({
 
-success:false,
-message:"Failed to fetch orders"
+          success: false,
+          message: "Failed to fetch orders"
 
-});
+        });
 
-}
+    }
 
-};
+  };
 
 
 // PAYMENT
 const updatePayment =
-async(req,res)=>{
+  async (req, res) => {
 
-try{
+    try {
 
-const order =
-await Order.findByIdAndUpdate(
+      const order =
+        await Order.findByIdAndUpdate(
 
-req.params.id,
+          req.params.id,
 
-{
-paymentReceived:
-req.body.paymentReceived
-},
+          {
+            paymentReceived:
+              req.body.paymentReceived
+          },
 
-{
-new:true
-}
+          {
+            new: true
+          }
 
-);
+        );
 
-res.json({
+      res.json({
 
-success:true,
-order
+        success: true,
+        order
 
-});
+      });
 
-}
+    }
 
-catch(error){
+    catch (error) {
 
-res.status(500)
-.json({
+      res.status(500)
+        .json({
 
-success:false,
-message:"Payment update failed"
+          success: false,
+          message: "Payment update failed"
 
-});
+        });
 
-}
+    }
 
-};
+  };
 
 
 module.exports = {
 
-placeOrder,
-getAllOrders,
-updateStatus,
-updateLocation,
-trackOrder,
-getMyOrders,
-updatePayment
+  placeOrder,
+  getAllOrders,
+  updateStatus,
+  updateLocation,
+  trackOrder,
+  getMyOrders,
+  updatePayment
 
 };

@@ -27,6 +27,7 @@ export default function AddressForm() {
 
   const params =
     useLocalSearchParams();
+  
 
   // ============================================
   // PARAMS
@@ -89,6 +90,9 @@ export default function AddressForm() {
           await AsyncStorage.getItem(
             "user"
           );
+        console.log("LAT:", lat);
+        console.log("LNG:", lng);
+        console.log("USER:", userData);
 
         if (!userData) {
 
@@ -96,11 +100,23 @@ export default function AddressForm() {
           return;
         }
 
-        const parsed =
-          JSON.parse(userData);
+        let parsed = null;
 
-        const uid =
-          parsed._id;
+        try {
+          parsed = JSON.parse(userData);
+        } catch {
+          Alert.alert("User data corrupted");
+          setLoading(false);
+          return;
+        }
+
+        const uid = parsed?._id;
+
+        if (!uid) {
+          Alert.alert("User not found");
+          setLoading(false);
+          return;
+        }
 
         setUserId(uid);
 

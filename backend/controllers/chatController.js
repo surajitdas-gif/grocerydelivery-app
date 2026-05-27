@@ -1,218 +1,218 @@
 const Order = require("../models/Order");
 
 const SUPPORT_PHONE =
-process.env.SUPPORT_PHONE ||
-"+91xxxxxxxxxx";
+    process.env.SUPPORT_PHONE ||
+    "+91xxxxxxxxxx";
 
 const SUPPORT_EMAIL =
-process.env.SUPPORT_EMAIL ||
-"support@email.com";
+    process.env.SUPPORT_EMAIL ||
+    "support@email.com";
 
-const chatBot = async (req,res)=>{
+const chatBot = async (req, res) => {
 
-try{
+    try {
 
-const userMessage =
-req.body.message || "";
+        const userMessage =
+            req.body.message || "";
 
-const lowerMsg =
-userMessage.toLowerCase();
+        const lowerMsg =
+            userMessage.toLowerCase();
 
 
-// HUMAN SUPPORT
-if(
-lowerMsg.includes("human") ||
-lowerMsg.includes("agent") ||
-lowerMsg.includes("support")
-){
+        // HUMAN SUPPORT
+        if (
+            lowerMsg.includes("human") ||
+            lowerMsg.includes("agent") ||
+            lowerMsg.includes("support")
+        ) {
 
-return res.json({
+            return res.json({
 
-reply:
-`You can contact support:
+                reply:
+                    `You can contact support:
 
 📞 ${SUPPORT_PHONE}
 📧 ${SUPPORT_EMAIL}`
 
-});
+            });
 
-}
-
-
-// TRACK ORDER
-if(
-lowerMsg.includes("track") ||
-lowerMsg.includes("order status")
-){
-
-const latestOrder =
-await Order.findOne()
-.sort({
-createdAt:-1
-});
-
-if(!latestOrder){
-
-return res.json({
-
-reply:
-"No active orders found."
-
-});
-
-}
-
-return res.json({
-
-reply:
-`Your latest order status is "${latestOrder.status}" 🚚`
-
-});
-
-}
+        }
 
 
-// CHANGE ADDRESS
-if(
-lowerMsg.includes("change address") ||
-lowerMsg.includes("delivery address")
-){
+        // TRACK ORDER
+        if (
+            lowerMsg.includes("track") ||
+            lowerMsg.includes("order status")
+        ) {
 
-return res.json({
+            const latestOrder =
+                await Order.findOne()
+                    .sort({
+                        createdAt: -1
+                    });
 
-reply:
-"Delivery address can be changed before order confirmation."
+            if (!latestOrder) {
 
-});
+                return res.json({
 
-}
+                    reply:
+                        "No active orders found."
+
+                });
+
+            }
+
+            return res.json({
+
+                reply:
+                    `Your latest order status is "${latestOrder.status}" 🚚`
+
+            });
+
+        }
 
 
-// GEMINI CHECK
-console.log(
+        // CHANGE ADDRESS
+        if (
+            lowerMsg.includes("change address") ||
+            lowerMsg.includes("delivery address")
+        ) {
 
-"GEMINI:",
+            return res.json({
 
-process.env.GEMINI_API_KEY
-? "FOUND"
-: "NOT FOUND"
+                reply:
+                    "Delivery address can be changed before order confirmation."
 
-);
+            });
+
+        }
 
 
-// GEMINI REQUEST
-const response =
-await fetch(
+        // GEMINI CHECK
+        console.log(
 
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            "GEMINI:",
 
-{
+            process.env.GEMINI_API_KEY
+                ? "FOUND"
+                : "NOT FOUND"
 
-method:"POST",
+        );
 
-headers:{
-"Content-Type":
-"application/json"
-},
 
-body:JSON.stringify({
+        // GEMINI REQUEST
+        const response =
+            await fetch(
 
-contents:[
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
 
-{
+                {
 
-parts:[
+                    method: "POST",
 
-{
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
-text:
-`You are an AI assistant for a food delivery app.
+                    body: JSON.stringify({
+
+                        contents: [
+
+                            {
+
+                                parts: [
+
+                                    {
+
+                                        text:
+                                            `You are an AI assistant for a food delivery app.
 
 Reply briefly and politely.
 
 User:
 ${userMessage}`
 
-}
+                                    }
 
-]
+                                ]
 
-}
+                            }
 
-]
+                        ]
 
-})
+                    })
 
-}
+                }
 
-);
-
-
-// GEMINI RESPONSE
-const data =
-await response.json();
-
-console.log(
-
-"GEMINI RESPONSE:",
-
-JSON.stringify(
-data,
-null,
-2
-)
-
-);
+            );
 
 
-// GET REPLY
-const reply =
+        // GEMINI RESPONSE
+        const data =
+            await response.json();
 
-data?.candidates?.[0]
-?.content?.parts?.[0]
-?.text ||
+        console.log(
 
-data?.promptFeedback
-?.blockReason ||
+            "GEMINI RESPONSE:",
 
-"Pepper couldn't answer right now 🌿 Please ask again in a moment.";
+            JSON.stringify(
+                data,
+                null,
+                2
+            )
+
+        );
 
 
-// SEND RESPONSE
-return res.json({
+        // GET REPLY
+        const reply =
 
-reply
+            data?.candidates?.[0]
+                ?.content?.parts?.[0]
+                ?.text ||
 
-});
+            data?.promptFeedback
+                ?.blockReason ||
 
-}
+            "Pepper couldn't answer right now 🌿 Please ask again in a moment.";
 
-catch(error){
 
-console.log(
+        // SEND RESPONSE
+        return res.json({
 
-"CHAT ERROR:",
+            reply
 
-error
+        });
 
-);
+    }
 
-return res
-.status(500)
-.json({
+    catch (error) {
 
-reply:
-error.message ||
-"Server error"
+        console.log(
 
-});
+            "CHAT ERROR:",
 
-}
+            error
+
+        );
+
+        return res
+            .status(500)
+            .json({
+
+                reply:
+                    error.message ||
+                    "Server error"
+
+            });
+
+    }
 
 };
 
 module.exports = {
 
-chatBot
+    chatBot
 
 };

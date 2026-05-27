@@ -15,9 +15,23 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCart } from '../src/context/CartContext';
 
 export default function PaymentScreen() {
-  const { cart, checkout } = useCart();
+
+  const cartContext = useCart();
+
+  if (!cartContext) {
+    return (
+      <View>
+        <Text>Cart unavailable</Text>
+      </View>
+    );
+  }
+
+  const { cart, checkout } = cartContext;
 
   const params = useLocalSearchParams();
+
+  console.log("CART:", cart);
+  console.log("PARAMS:", params);
 
   // LOCATION
   const lat = params.lat ? String(params.lat) : '';
@@ -45,16 +59,17 @@ export default function PaymentScreen() {
   const [loading, setLoading] =
     useState(false);
 
+
+
   // TOTAL
   const subtotal =
-    cart.reduce(
+    (cart || []).reduce(
       (sum, item) =>
         sum +
-        item.price *
-        (item.qty || 1),
+        ((item?.price || 0) *
+          (item?.qty || 1)),
       0
     );
-
   const deliveryFee =
     subtotal < 500 ? 13 : 0;
 
@@ -204,7 +219,7 @@ export default function PaymentScreen() {
   // 🔥 MAIN PAYMENT FUNCTION
   const handlePayment = async () => {
     try {
-      if (cart.length === 0) {
+      if (!cart || cart.length === 0) {
         Alert.alert('Cart is empty');
         return;
       }

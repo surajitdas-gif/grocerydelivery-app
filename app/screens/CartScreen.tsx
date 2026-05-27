@@ -24,6 +24,7 @@ export default function CartScreen() {
     decreaseQty,
     addToCart,
   } = useCart();
+  console.log("CART:", cart);
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
   const { reorder } =
@@ -55,13 +56,14 @@ export default function CartScreen() {
     }
   }, [reorder]);
 
-  
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * (item.qty || 1),
+  const subtotal = (cart || []).reduce(
+    (sum, item) =>
+      sum +
+      ((item?.price || 0) *
+        (item?.qty || 1)),
     0
   );
-
   const deliveryFee = 1;
   const platformFee = 2;
   const discount = couponApplied ? Math.round(subtotal * 0.1) : 0;
@@ -70,13 +72,19 @@ export default function CartScreen() {
 
 
   const handleCheckout = () => {
-    if (cart.length === 0) {
+    if (!cart || cart.length === 0) {
       Alert.alert('Cart is empty');
       return;
     }
 
     // 🔥 OPEN MAP FIRST
-    router.push('/select-location');
+    router.push({
+      pathname: "/address-form",
+      params: {
+        lat: "22.655",
+        lng: "88.38",
+      },
+    });
   };
   const handleCoupon = () => {
     if (coupon.trim().toUpperCase() === 'FRESH10') {
@@ -87,13 +95,13 @@ export default function CartScreen() {
     }
   };
 
-  
+
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" />
 
-      {}
+      { }
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -116,8 +124,8 @@ export default function CartScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {}
-        {cart.length === 0 ? (
+        { }
+        {!cart || cart.length === 0 ? (
           <View style={styles.emptyCart}>
             <Text style={styles.emptyEmoji}>🛒</Text>
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
@@ -133,9 +141,9 @@ export default function CartScreen() {
           </View>
         ) : (
           <>
-            {}
+            { }
             <View style={styles.itemsSection}>
-              {cart.map((item, index) => (
+              {(cart || []).map((item, index) => (
                 <View key={index} style={styles.card}>
                   <Image
                     source={{ uri: item.image }}
@@ -176,7 +184,7 @@ export default function CartScreen() {
                     </View>
                   </View>
 
-                  {}
+                  { }
                   <Text style={styles.itemTotal}>
                     ₹{item.price * (item.qty || 1)}
                   </Text>
@@ -184,7 +192,7 @@ export default function CartScreen() {
               ))}
             </View>
 
-            {}
+            { }
             <View style={styles.couponBox}>
               <Text style={styles.couponLabel}>🎟  Apply Coupon</Text>
               <View style={styles.couponRow}>
@@ -217,7 +225,7 @@ export default function CartScreen() {
               )}
             </View>
 
-            {}
+            { }
             <View style={styles.billBox}>
               <Text style={styles.billTitle}>Bill Details</Text>
 
@@ -274,8 +282,8 @@ export default function CartScreen() {
         <View style={{ height: 110 }} />
       </ScrollView>
 
-      {}
-      {cart.length > 0 && (
+      { }
+      {cart && cart.length > 0 && (
         <View style={styles.footer}>
           <View style={styles.footerLeft}>
             <Text style={styles.footerAmount}>₹{total}</Text>

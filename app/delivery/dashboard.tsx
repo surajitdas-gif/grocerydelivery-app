@@ -119,19 +119,50 @@ export default function DeliveryDashboard() {
         await locationSubscriptionRef.current.remove();
         locationSubscriptionRef.current = null;
       }
-      locationSubscriptionRef.current = await Location.watchPositionAsync(
-        { accuracy: Location.Accuracy.High, timeInterval: 3000, distanceInterval: 5 },
-        async (location) => {
-          const lat = location.coords.latitude;
-          const lng = location.coords.longitude;
-          console.log("📍 SENDING LOCATION:", lat, lng);
-          await fetch(`${BASE_URL}/api/orders/update-location/${orderId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lat, lng }),
-          });
-        }
-      );
+      locationSubscriptionRef.current =
+        await Location.watchPositionAsync(
+
+          {
+            accuracy:
+              Location.Accuracy.BestForNavigation,
+
+            timeInterval: 3000,
+
+            distanceInterval: 5,
+          },
+
+          async (location) => {
+
+            const lat =
+              location.coords.latitude;
+
+            const lng =
+              location.coords.longitude;
+
+            console.log(
+              "📍 LIVE DELIVERY LOCATION:",
+              lat,
+              lng
+            );
+
+            await fetch(
+              `${BASE_URL}/api/orders/update-location/${orderId}`,
+              {
+                method: 'PUT',
+
+                headers: {
+                  'Content-Type':
+                    'application/json'
+                },
+
+                body: JSON.stringify({
+                  lat,
+                  lng,
+                }),
+              }
+            );
+          }
+        );
     } catch (err) {
       console.log("❌ TRACKING ERROR:", err);
     }
@@ -430,7 +461,24 @@ export default function DeliveryDashboard() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.trackBtn}
-                    onPress={() => router.push(`/track?id=${order._id}`)}
+                    onPress={() => {
+
+                      if (
+                        order?.userLocation?.lat &&
+                        order?.userLocation?.lng
+                      ) {
+
+                        Linking.openURL(
+                          `https://www.google.com/maps/dir/?api=1&destination=${order.userLocation.lat},${order.userLocation.lng}&travelmode=driving`
+                        );
+
+                      } else {
+
+                        Alert.alert(
+                          "Customer location missing"
+                        );
+                      }
+                    }}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionIcon}>🗺</Text>
