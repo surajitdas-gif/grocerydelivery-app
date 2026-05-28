@@ -1,13 +1,6 @@
-
-import * as Location from 'expo-location';
-
+import { getFreshLocation } from '@/Utils/freshLocation';
 import { router } from 'expo-router';
-
-import {
-  useEffect,
-  useState,
-} from 'react';
-
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,101 +9,71 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-import MapView, {
-  Marker,
-} from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 
 export default function SelectLocation() {
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadingMsg, setLoadingMsg] = useState('Detecting your location...');
 
-  const [region, setRegion] =
-    useState({
-      latitude: 22.655,
-      longitude: 88.38,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
+  const [region, setRegion] = useState({
+    latitude: 22.655,
+    longitude: 88.38,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  });
 
-  const [marker, setMarker] =
-    useState({
-      latitude: 22.655,
-      longitude: 88.38,
-    });
+  const [marker, setMarker] = useState({
+    latitude: 22.655,
+    longitude: 88.38,
+  });
 
   // ======================================================
-  // GET CURRENT LOCATION
+  // GET CURRENT LOCATION — forces fresh GPS, no cache
   // ======================================================
 
-  const getCurrentLocation =
-    async () => {
+  const getCurrentLocation = async () => {
+    try {
+      setLoading(true);
+      setLoadingMsg('Getting your GPS location...');
 
-      try {
+      const loc = await getFreshLocation(15000);
 
-        setLoading(true);
-
-        const { status } =
-          await Location.requestForegroundPermissionsAsync();
-
-        if (status !== 'granted') {
-
-          Alert.alert(
-            'Permission denied'
-          );
-
-          return;
-        }
-
-        const loc =
-          await Location.getCurrentPositionAsync({
-            accuracy:
-              Location.Accuracy.BestForNavigation,
-          });
-
-        const newLocation = {
-          latitude:
-            loc.coords.latitude,
-          longitude:
-            loc.coords.longitude,
-        };
-
-        console.log(
-          "REAL GPS:",
-          newLocation
-        );
-
-        setRegion({
-          ...newLocation,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
-
-        setMarker(newLocation);
-
-      } catch (err) {
-
-        console.log(err);
-
+      if (!loc) {
         Alert.alert(
-          "Failed to get location"
+          'Could not get location',
+          'Make sure GPS is enabled and try again.',
         );
-
-      } finally {
-
         setLoading(false);
+        return;
       }
-    };
 
-  // ======================================================
-  // AUTO DETECT ON OPEN
-  // ======================================================
+      const newLocation = {
+        latitude: loc.latitude,
+        longitude: loc.longitude,
+      };
 
+      console.log('📍 FRESH GPS IN SELECT LOCATION:', newLocation);
+
+      setRegion({
+        ...newLocation,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+
+      setMarker(newLocation);
+
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Failed to get location');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-detect on open
   useEffect(() => {
-
     getCurrentLocation();
-
   }, []);
 
   // ======================================================
@@ -118,24 +81,12 @@ export default function SelectLocation() {
   // ======================================================
 
   const confirmLocation = () => {
-
-    if (
-      !marker.latitude ||
-      !marker.longitude
-    ) {
-
-      Alert.alert(
-        "Location missing"
-      );
-
+    if (!marker.latitude || !marker.longitude) {
+      Alert.alert('Location missing');
       return;
     }
-
-    // AUTO OPEN ADDRESS FORM
-
     router.push({
-      pathname: "/address-form",
-
+      pathname: '/address-form',
       params: {
         lat: String(marker.latitude),
         lng: String(marker.longitude),
@@ -148,20 +99,13 @@ export default function SelectLocation() {
   // ======================================================
 
   if (loading) {
-
     return (
-
       <View style={styles.loader}>
-
-        <ActivityIndicator
-          size="large"
-          color="#16a34a"
-        />
-
-        <Text style={styles.loadingText}>
-          Detecting your location...
+        <ActivityIndicator size="large" color="#16a34a" />
+        <Text style={styles.loadingText}>{loadingMsg}</Text>
+        <Text style={styles.loadingSub}>
+          Make sure GPS is turned on
         </Text>
-
       </View>
     );
   }
@@ -171,76 +115,43 @@ export default function SelectLocation() {
   // ======================================================
 
   return (
-
     <View style={{ flex: 1 }}>
 
       <MapView
         style={{ flex: 1 }}
-
         region={region}
-
         onPress={(e) => {
-
-          const coord =
-            e.nativeEvent.coordinate;
-
+          const coord = e.nativeEvent.coordinate;
           setMarker(coord);
-
-          setRegion({
-            ...coord,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
+          setRegion({ ...coord, latitudeDelta: 0.01, longitudeDelta: 0.01 });
         }}
       >
-
         <Marker
           coordinate={marker}
           draggable
-
           onDragEnd={(e) => {
-
-            const coord =
-              e.nativeEvent.coordinate;
-
+            const coord = e.nativeEvent.coordinate;
             setMarker(coord);
-
-            setRegion({
-              ...coord,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            });
+            setRegion({ ...coord, latitudeDelta: 0.01, longitudeDelta: 0.01 });
           }}
         />
-
       </MapView>
 
-      {/* BUTTONS */}
+      {/* Coordinate display */}
+      <View style={styles.coordBadge}>
+        <Text style={styles.coordText}>
+          {marker.latitude.toFixed(5)}, {marker.longitude.toFixed(5)}
+        </Text>
+      </View>
 
+      {/* Buttons */}
       <View style={styles.bottom}>
-
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={getCurrentLocation}
-        >
-
-          <Text style={styles.text}>
-            📍 Use Current Location
-          </Text>
-
+        <TouchableOpacity style={styles.btn} onPress={getCurrentLocation}>
+          <Text style={styles.text}>📍 Use Current Location</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.confirm}
-          onPress={confirmLocation}
-        >
-
-          <Text style={styles.text}>
-            Continue
-          </Text>
-
+        <TouchableOpacity style={styles.confirm} onPress={confirmLocation}>
+          <Text style={styles.text}>Continue</Text>
         </TouchableOpacity>
-
       </View>
 
     </View>
@@ -248,20 +159,38 @@ export default function SelectLocation() {
 }
 
 const styles = StyleSheet.create({
-
   loader: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#fff',
+    gap: 10,
   },
-
   loadingText: {
-    marginTop: 12,
+    marginTop: 4,
     fontSize: 16,
     fontWeight: '600',
+    color: '#111827',
   },
-
+  loadingSub: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  coordBadge: {
+    position: 'absolute',
+    top: 55,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  coordText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
   bottom: {
     position: 'absolute',
     bottom: 30,
@@ -269,25 +198,21 @@ const styles = StyleSheet.create({
     right: 20,
     gap: 10,
   },
-
   btn: {
     backgroundColor: '#2563eb',
     padding: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
-
   confirm: {
     backgroundColor: '#16a34a',
     padding: 16,
     borderRadius: 14,
     alignItems: 'center',
   },
-
   text: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 15,
   },
-
 });

@@ -1,5 +1,3 @@
-
-
 import {
   useCallback,
   useEffect,
@@ -9,85 +7,338 @@ import {
 
 import {
   Alert,
-  Dimensions,
   Image,
-  Linking,
+  Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
+import MapView, { Marker } from 'react-native-maps';
+import MapViewDirections from 'react-native-maps-directions';
+
 import { socket } from "@/socket";
+import { getFreshLocation } from '@/Utils/freshLocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { router, useFocusEffect } from 'expo-router';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const BASE_URL = "https://grocerydelivery-backend.onrender.com";
-const { width } = Dimensions.get('window');
 
-const STATUS_CONFIG: Record<
-  string,
-  {
-    color: string;
-    bg: string;
-    dot: string;
-  }
-> = {
+// ─── Haversine ────────────────────────────────────────────────────────────────
 
-  Pending: {
-    color: "#92400e",
-    bg: "#fef3c7",
-    dot: "#f59e0b"
-  },
+function haversineDistance(
+  lat1: number, lng1: number,
+  lat2: number, lng2: number,
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
-  Preparing: {
-    color: "#1e40af",
-    bg: "#dbeafe",
-    dot: "#3b82f6"
-  },
+function formatDistance(m: number) {
+  return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`;
+}
 
-  "Out for Delivery": {
-    color: "#065f46",
-    bg: "#d1fae5",
-    dot: "#10b981"
-  },
+// ─── Status config ────────────────────────────────────────────────────────────
 
-  Delivered: {
-    color: "#166534",
-    bg: "#dcfce7",
-    dot: "#22c55e"
-  },
-
-  Cancelled: {
-    color: "#991b1b",
-    bg: "#fee2e2",
-    dot: "#ef4444"
-  }
-
+const STATUS_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
+  Pending: { color: "#92400e", bg: "#fef3c7", dot: "#f59e0b" },
+  Preparing: { color: "#1e40af", bg: "#dbeafe", dot: "#3b82f6" },
+  "Out for Delivery": { color: "#065f46", bg: "#d1fae5", dot: "#10b981" },
+  Delivered: { color: "#166534", bg: "#dcfce7", dot: "#22c55e" },
+  Cancelled: { color: "#991b1b", bg: "#fee2e2", dot: "#ef4444" },
 };
 
-const getStatusStyle =
-  (status: string) =>
+const getStatusStyle = (s: string) =>
+  STATUS_CONFIG[s] ?? { color: "#374151", bg: "#f3f4f6", dot: "#9ca3af" };
 
-    STATUS_CONFIG[status]
-    ??
+// ─── In-App Map Modal ─────────────────────────────────────────────────────────
 
-    {
-      color: "#374151",
-      bg: "#f3f4f6",
-      dot: "#9ca3af"
-    };
+function InAppMapModal({
+  visible,
+  onClose,
+  deliveryLat,
+  deliveryLng,
+  customerLat,
+  customerLng,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  deliveryLat: number;
+  deliveryLng: number;
+  customerLat: number;
+  customerLng: number;
+}) {
+  const mapRef = useRef<any>(null);
 
-// ─────────────────────────────────────────────────────────────────────────────
+  const distance = haversineDistance(
+    deliveryLat, deliveryLng,
+    customerLat, customerLng,
+  );
+
+  const mid = {
+    latitude: (deliveryLat + customerLat) / 2,
+    longitude: (deliveryLng + customerLng) / 2,
+  };
+
+  useEffect(() => {
+    if (!visible || !mapRef.current) return;
+    // Small delay so modal is fully mounted
+    const t = setTimeout(() => {
+      mapRef.current?.fitToCoordinates(
+        [
+          { latitude: deliveryLat, longitude: deliveryLng },
+          { latitude: customerLat, longitude: customerLng },
+        ],
+        { edgePadding: { top: 60, right: 50, bottom: 180, left: 50 }, animated: true },
+      );
+    }, 400);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <View style={mapStyles.root}>
+        <StatusBar barStyle="dark-content" />
+
+        {/* Close button */}
+        <View style={mapStyles.closeRow}>
+          <TouchableOpacity style={mapStyles.closeBtn} onPress={onClose}>
+            <Text style={mapStyles.closeText}>✕ Close</Text>
+          </TouchableOpacity>
+          <Text style={mapStyles.modalTitle}>Customer Location</Text>
+        </View>
+
+
+        <MapView
+          ref={mapRef}
+          style={{ flex: 1 }}
+
+          initialRegion={{
+            latitude:
+              (deliveryLat + customerLat) / 2,
+
+            longitude:
+              (deliveryLng + customerLng) / 2,
+
+            latitudeDelta: 0.03,
+            longitudeDelta: 0.03,
+          }}
+        >
+
+          {/* DELIVERY BOY */}
+          <Marker
+            coordinate={{ latitude: deliveryLat, longitude: deliveryLng }}
+            title="You"
+          >
+            <View style={mapStyles.deliveryMarker}>
+              <Text style={{ fontSize: 28 }}>🛵</Text>
+            </View>
+          </Marker>
+
+          {/* CUSTOMER */}
+          <Marker
+            coordinate={{ latitude: customerLat, longitude: customerLng }}
+            title="Customer"
+            description="Drop-off point"
+            pinColor="#2563eb"
+          />
+
+          {/* DISTANCE BUBBLE */}
+          <Marker
+            coordinate={mid}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+          >
+            <View style={mapStyles.distanceBubble}>
+              <Text style={mapStyles.distanceText}>
+                {formatDistance(distance)}
+              </Text>
+            </View>
+          </Marker>
+
+          {/* ROUTE */}
+          {deliveryLat &&
+            deliveryLng &&
+            customerLat &&
+            customerLng && (
+
+              <MapViewDirections
+                origin={{
+                  latitude: deliveryLat,
+                  longitude: deliveryLng,
+                }}
+
+                destination={{
+                  latitude: customerLat,
+                  longitude: customerLng,
+                }}
+
+                apikey={
+                  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY!
+                }
+
+                strokeWidth={5}
+
+                strokeColor="#16a34a"
+
+                mode="DRIVING"
+
+                onError={(e) =>
+                  console.log("ROUTE ERROR:", e)
+                }
+              />
+
+            )}
+        </MapView>
+
+        {/* Bottom info */}
+        <View style={mapStyles.bottomCard}>
+          <Text style={mapStyles.distanceLabel}>📍 Distance to Customer</Text>
+          <Text style={mapStyles.distanceValue}>{formatDistance(distance)}</Text>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const mapStyles = StyleSheet.create({
+  root: { flex: 1 },
+  closeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 52,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#0a1628',
+    gap: 14,
+  },
+  closeBtn: {
+    backgroundColor: 'rgba(239,68,68,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239,68,68,0.3)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  closeText: {
+    color: '#f87171',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  modalTitle: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  deliveryMarker: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 4,
+    elevation: 4,
+  },
+  distanceBubble: {
+    backgroundColor: '#1f2937',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+  },
+  distanceText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  bottomCard: {
+    backgroundColor: '#fff',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    elevation: 10,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+  },
+  distanceLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  distanceValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+});
+
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 
 export default function DeliveryDashboard() {
+
   const [orders, setOrders] = useState<any[]>([]);
+  const [deliveryLocation, setDeliveryLocation] = useState<{
+    lat: number; lng: number;
+  } | null>(null);
+
+  // Map modal state
+  const [mapModal, setMapModal] = useState<{
+    visible: boolean;
+    customerLat: number;
+    customerLng: number;
+  }>({ visible: false, customerLat: 0, customerLng: 0 });
+
   const trackingOrderRef = useRef<string | null>(null);
   const locationSubscriptionRef = useRef<any>(null);
 
+  // ── Auto-detect delivery boy location on mount — fresh GPS, no cache ─────────
+  useEffect(() => {
+    const getLocation = async () => {
+      let loc = null;
+
+      // Retry up to 3 times
+      for (let i = 0; i < 3; i++) {
+
+        loc = await getFreshLocation(15000);
+
+        if (loc) {
+
+          console.log(
+            `✅ GPS FIX ${i + 1}:`,
+            loc.latitude,
+            loc.longitude
+          );
+
+          break;
+        }
+
+        console.log("Retrying GPS...");
+      }
+      if (!loc) {
+        console.log("❌ Could not get delivery boy location");
+        return;
+      }
+      setDeliveryLocation({
+        lat: loc.latitude,
+        lng: loc.longitude,
+      });
+      console.log("📍 DELIVERY BOY FRESH LOCATION:", loc.latitude, loc.longitude);
+    };
+    getLocation();
+  }, []);
+
+  // ── Load orders ─────────────────────────────────────────────────────────────
   useFocusEffect(
     useCallback(() => { loadOrders(); }, [])
   );
@@ -107,6 +358,18 @@ export default function DeliveryDashboard() {
     };
   }, []);
 
+  const loadOrders = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/orders/all-orders`);
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ── GPS tracking ────────────────────────────────────────────────────────────
+
   const startTracking = async (orderId: string) => {
     try {
       trackingOrderRef.current = orderId;
@@ -119,50 +382,30 @@ export default function DeliveryDashboard() {
         await locationSubscriptionRef.current.remove();
         locationSubscriptionRef.current = null;
       }
-      locationSubscriptionRef.current =
-        await Location.watchPositionAsync(
+      locationSubscriptionRef.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation,
+          timeInterval: 3000,
+          distanceInterval: 5,
+        },
+        async (location) => {
+          const lat = location.coords.latitude;
+          const lng = location.coords.longitude;
+          console.log("📍 LIVE DELIVERY LOCATION:", lat, lng);
 
-          {
-            accuracy:
-              Location.Accuracy.BestForNavigation,
+          // Keep local state updated so Track button shows accurate distance
+          setDeliveryLocation({ lat, lng });
 
-            timeInterval: 3000,
-
-            distanceInterval: 5,
-          },
-
-          async (location) => {
-
-            const lat =
-              location.coords.latitude;
-
-            const lng =
-              location.coords.longitude;
-
-            console.log(
-              "📍 LIVE DELIVERY LOCATION:",
-              lat,
-              lng
-            );
-
-            await fetch(
-              `${BASE_URL}/api/orders/update-location/${orderId}`,
-              {
-                method: 'PUT',
-
-                headers: {
-                  'Content-Type':
-                    'application/json'
-                },
-
-                body: JSON.stringify({
-                  lat,
-                  lng,
-                }),
-              }
-            );
-          }
-        );
+          await fetch(
+            `${BASE_URL}/api/orders/update-location/${orderId}`,
+            {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ lat, lng }),
+            }
+          );
+        }
+      );
     } catch (err) {
       console.log("❌ TRACKING ERROR:", err);
     }
@@ -176,37 +419,26 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const loadOrders = async () => {
-    try {
-      const res = await fetch(`${BASE_URL}/api/orders/all-orders`);
-      const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  // ── Update status ────────────────────────────────────────────────────────────
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      console.log("🚀 CLICKED:", status);
       const userData = await AsyncStorage.getItem("user");
       const user = userData ? JSON.parse(userData) : null;
-      if (!user || !user._id) {
-        Alert.alert("User _id missing");
-        return;
-      }
+      if (!user?._id) { Alert.alert("User not found"); return; }
+
       const res = await fetch(`${BASE_URL}/api/orders/status/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, deliveryBoyId: user._id }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        Alert.alert(data.message || "Update failed");
-        return;
-      }
-      if (status === "Out for Delivery") startTracking(id);
-      if (status === "Delivered") stopTracking();
+
+      if (!res.ok) { Alert.alert(data.message || "Update failed"); return; }
+
+      if (status === "Out for Delivery") await startTracking(id);
+      if (status === "Delivered" || status === "Cancelled") await stopTracking();
+
       Alert.alert("Updated", status);
       loadOrders();
     } catch (err) {
@@ -214,58 +446,18 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const markPaymentReceived =
-    async (id: string) => {
-
-      try {
-
-        const res = await fetch(
-          `${BASE_URL}/api/orders/payment/${id}`,
-          {
-            method: "PUT",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              paymentReceived: true,
-            }),
-          }
-        );
-
-        const data =
-          await res.json();
-
-        if (data.success) {
-
-          Alert.alert(
-            "Payment received ✅"
-          );
-
-          loadOrders();
-        }
-
-      } catch (err) {
-
-        console.log(
-          "PAYMENT UPDATE ERROR:",
-          err
-        );
-
-        Alert.alert(
-          "Payment update failed"
-        );
-      }
-    };
-
-  const callUser = async (phone: string) => {
-    if (!phone) { Alert.alert("No phone number"); return; }
+  const markPaymentReceived = async (id: string) => {
     try {
-      await Linking.openURL(`tel:${phone}`);
-    } catch {
-      Alert.alert("Call failed");
+      const res = await fetch(`${BASE_URL}/api/orders/payment/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentReceived: true }),
+      });
+      const data = await res.json();
+      if (data.success) { Alert.alert("Payment received ✅"); loadOrders(); }
+    } catch (err) {
+      console.log("PAYMENT UPDATE ERROR:", err);
+      Alert.alert("Payment update failed");
     }
   };
 
@@ -274,15 +466,86 @@ export default function DeliveryDashboard() {
     router.replace('/auth/login' as any);
   };
 
+  // ── Open in-app map ─────────────────────────────────────────────────────────
+const openTrackMap = (order: any) => {
+
+  // Stop tracking for completed orders
+  if (
+    order?.status === "Delivered" ||
+    order?.status === "Cancelled"
+  ) {
+
+    Alert.alert(
+      "Tracking ended for this order"
+    );
+
+    return;
+  }
+
+  // Validate customer coordinates
+  if (
+    !order?.userLocation?.lat ||
+    !order?.userLocation?.lng
+  ) {
+
+    Alert.alert(
+      "Customer location missing"
+    );
+
+    return;
+  }
+
+  // Validate delivery boy coordinates
+  if (
+    !deliveryLocation?.lat ||
+    !deliveryLocation?.lng
+  ) {
+
+    Alert.alert(
+      "Delivery location unavailable"
+    );
+
+    return;
+  }
+
+  setMapModal({
+    visible: true,
+
+    customerLat: Number(
+      order.userLocation.lat
+    ),
+
+    customerLng: Number(
+      order.userLocation.lng
+    ),
+  });
+};
+  // ── Render ───────────────────────────────────────────────────────────────────
+
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" backgroundColor="#0a1628" />
+
+      {/* In-app map modal */}
+      <InAppMapModal
+        visible={mapModal.visible}
+        onClose={() => setMapModal(p => ({ ...p, visible: false }))}
+        deliveryLat={deliveryLocation?.lat ?? mapModal.customerLat}
+        deliveryLng={deliveryLocation?.lng ?? mapModal.customerLng}
+        customerLat={mapModal.customerLat}
+        customerLng={mapModal.customerLng}
+      />
 
       {/* ══ HEADER ════════════════════════════════════════════ */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerEyebrow}>DELIVERY PARTNER</Text>
           <Text style={styles.headerTitle}>Dashboard</Text>
+          {deliveryLocation && (
+            <Text style={styles.headerLocation}>
+              📍 GPS Active
+            </Text>
+          )}
         </View>
         <View style={styles.headerRight}>
           <View style={styles.liveIndicator}>
@@ -295,7 +558,7 @@ export default function DeliveryDashboard() {
         </View>
       </View>
 
-      {/* ══ ORDER COUNT STRIP ══════════════════════════════════ */}
+      {/* ══ STRIP ══════════════════════════════════════════════ */}
       <View style={styles.strip}>
         <Text style={styles.stripText}>
           {orders.length} {orders.length === 1 ? 'order' : 'orders'} assigned
@@ -311,18 +574,44 @@ export default function DeliveryDashboard() {
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📭</Text>
             <Text style={styles.emptyTitle}>No orders yet</Text>
-            <Text style={styles.emptySub}>New orders will appear here in real time</Text>
+            <Text style={styles.emptySub}>
+              New orders will appear here in real time
+            </Text>
           </View>
         ) : (
           orders.map((order) => {
             const st = getStatusStyle(order.status);
+
+            const isTerminal =
+              order.status === "Delivered" ||
+              order.status === "Cancelled";
+
+            const isOutForDelivery =
+              order.status === "Out for Delivery";
+
+            // Distance if delivery location available
+            const customerLat = order?.userLocation?.lat
+              ? Number(order.userLocation.lat) : null;
+            const customerLng = order?.userLocation?.lng
+              ? Number(order.userLocation.lng) : null;
+
+            const distText =
+              deliveryLocation && customerLat && customerLng
+                ? formatDistance(haversineDistance(
+                  deliveryLocation.lat, deliveryLocation.lng,
+                  customerLat, customerLng,
+                ))
+                : null;
+
             return (
               <View key={order._id} style={styles.card}>
 
-                {/* ── Card Top Row ── */}
+                {/* Card top */}
                 <View style={styles.cardTop}>
                   <View style={styles.orderIdBadge}>
-                    <Text style={styles.orderIdText}>#{order._id.slice(-6).toUpperCase()}</Text>
+                    <Text style={styles.orderIdText}>
+                      #{order._id.slice(-6).toUpperCase()}
+                    </Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: st.bg }]}>
                     <View style={[styles.statusDot, { backgroundColor: st.dot }]} />
@@ -332,70 +621,41 @@ export default function DeliveryDashboard() {
                   </View>
                 </View>
 
-                {/* ── Amount ── */}
-                <Text style={styles.amount}>
-                  ₹{order.total}
-                </Text>
+                {/* Amount */}
+                <Text style={styles.amount}>₹{order.total}</Text>
 
-                {/* ── PAYMENT STATUS ── */}
+                {/* Payment */}
                 {order?.paymentMethod === "COD" && (
-
                   <View style={styles.paymentSection}>
-
                     <View style={styles.paymentTop}>
-
-                      <Text style={styles.paymentTitle}>
-                        Cash on Delivery
-                      </Text>
-
+                      <Text style={styles.paymentTitle}>Cash on Delivery</Text>
                       {order?.paymentReceived ? (
-
                         <View style={styles.paidBadge}>
-                          <Text style={styles.paidBadgeText}>
-                            ✓ Paid
-                          </Text>
+                          <Text style={styles.paidBadgeText}>✓ Paid</Text>
                         </View>
-
                       ) : (
-
                         <View style={styles.unpaidBadge}>
-                          <Text style={styles.unpaidBadgeText}>
-                            Pending
-                          </Text>
+                          <Text style={styles.unpaidBadgeText}>Pending</Text>
                         </View>
-
                       )}
-
                     </View>
-
                     {!order?.paymentReceived && (
                       <>
-
                         <View style={styles.qrBox}>
-
                           <Image
                             source={{
-                              uri:
-                                `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
-                                  `upi://pay?pa=dasantu0118-2@oksbi&pn=Village Grocery&am=${order.total}&tn=Order-${order._id}&cu=INR`
-                                )}`,
+                              uri: `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+                                `upi://pay?pa=dasantu0118-2@oksbi&pn=Village Grocery&am=${order.total}&tn=Order-${order._id}&cu=INR`
+                              )}`,
                             }}
                             style={styles.qrImage}
                           />
-                          <Text style={styles.qrText}>
-                            Scan QR to Pay
-                          </Text>
-
-                          <Text style={styles.qrSub}>
-                            UPI Accepted
-                          </Text>
-
+                          <Text style={styles.qrText}>Scan QR to Pay</Text>
+                          <Text style={styles.qrSub}>UPI Accepted</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.paymentBtn}
-                          onPress={() =>
-                            markPaymentReceived(order._id)
-                          }
+                          onPress={() => markPaymentReceived(order._id)}
                         >
                           <Text style={styles.paymentBtnText}>
                             Payment Received
@@ -403,13 +663,12 @@ export default function DeliveryDashboard() {
                         </TouchableOpacity>
                       </>
                     )}
-
                   </View>
                 )}
 
                 <View style={styles.divider} />
 
-                {/* ── Customer Info ── */}
+                {/* Customer info */}
                 <View style={styles.infoBlock}>
                   <View style={styles.infoRow}>
                     <Text style={styles.infoIcon}>👤</Text>
@@ -435,9 +694,18 @@ export default function DeliveryDashboard() {
                       {order.address || 'No address'}
                     </Text>
                   </View>
+                  {/* Distance badge */}
+                  {distText && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoIcon}>📏</Text>
+                      <Text style={[styles.infoValue, { color: '#16a34a', fontWeight: '700' }]}>
+                        {distText} away
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
-                {/* ── Items ── */}
+                {/* Items */}
                 <View style={styles.itemsBlock}>
                   <Text style={styles.itemsLabel}>ORDER ITEMS</Text>
                   {order.items?.map((item: any, i: number) => (
@@ -449,106 +717,92 @@ export default function DeliveryDashboard() {
                   ))}
                 </View>
 
-                {/* ── Action Buttons ── */}
+                {/* Actions */}
                 <View style={styles.actionRow}>
                   <TouchableOpacity
                     style={styles.callBtn}
-                    onPress={() => callUser(order.customerPhone)}
+                    onPress={async () => {
+                      if (!order.customerPhone) {
+                        Alert.alert("No phone number");
+                        return;
+                      }
+                      const { default: Linking } = await import('react-native').then(
+                        m => ({ default: m.Linking })
+                      );
+                      Linking.openURL(`tel:${order.customerPhone}`);
+                    }}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionIcon}>📞</Text>
                     <Text style={styles.actionBtnText}>Call</Text>
                   </TouchableOpacity>
+
+                  {/* Track — in-app map; disabled if terminal */}
                   <TouchableOpacity
-                    style={styles.trackBtn}
+                    style={[
+                      styles.trackBtn,
+                      isTerminal && styles.disabledBtn,
+                    ]}
+                    disabled={isTerminal}
                     onPress={() => {
 
                       if (
-                        order?.userLocation?.lat &&
-                        order?.userLocation?.lng
+                        order.status === "Delivered" ||
+                        order.status === "Cancelled"
                       ) {
 
-                        Linking.openURL(
-                          `https://www.google.com/maps/dir/?api=1&destination=${order.userLocation.lat},${order.userLocation.lng}&travelmode=driving`
-                        );
-
-                      } else {
-
                         Alert.alert(
-                          "Customer location missing"
+                          "Tracking ended"
                         );
+
+                        return;
                       }
+
+                      openTrackMap(order);
                     }}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionIcon}>🗺</Text>
-                    <Text style={styles.actionBtnText}>Track</Text>
+                    <Text style={styles.actionBtnText}>
+                      {isTerminal ? 'Done' : 'Track'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
 
-                {/* ── Status Updater ── */}
+                {/* Status updater */}
                 <View style={styles.statusUpdaterLabel}>
                   <Text style={styles.statusUpdaterTitle}>UPDATE STATUS</Text>
                 </View>
 
-                <View style={styles.statusRow}>
+                <View style={styles.statusRow2}>
 
-                  {/* PREPARING */}
+                  {/* PREPARING — disabled once Out for Delivery / terminal */}
                   <TouchableOpacity
                     style={[
                       styles.statusBtn,
-                      (
-                        order.status === "Out for Delivery" ||
-                        order.status === "Delivered"
-                      ) && styles.disabledBtn,
+                      (isOutForDelivery || isTerminal) && styles.disabledBtn,
                     ]}
-                    disabled={
-                      order.status === "Out for Delivery" ||
-                      order.status === "Delivered"
-                    }
-                    onPress={() =>
-                      updateStatus(order._id, "Preparing")
-                    }
+                    disabled={isOutForDelivery || isTerminal}
+                    onPress={() => updateStatus(order._id, "Preparing")}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.statusBtnIcon}>
-                      🍳
-                    </Text>
-
-                    <Text style={styles.statusBtnLabel}>
-                      Preparing
-                    </Text>
+                    <Text style={styles.statusBtnIcon}>🍳</Text>
+                    <Text style={styles.statusBtnLabel}>Preparing</Text>
                   </TouchableOpacity>
 
-                  {/* OUT FOR DELIVERY */}
+                  {/* OUT FOR DELIVERY — disabled once terminal */}
                   <TouchableOpacity
                     style={[
                       styles.statusBtn,
                       styles.statusBtnOrange,
-                      order.status === "Delivered" &&
-                      styles.disabledBtn,
+                      isTerminal && styles.disabledBtn,
                     ]}
-                    disabled={
-                      order.status === "Delivered"
-                    }
-                    onPress={() =>
-                      updateStatus(
-                        order._id,
-                        "Out for Delivery"
-                      )
-                    }
+                    disabled={isTerminal}
+                    onPress={() => updateStatus(order._id, "Out for Delivery")}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.statusBtnIcon}>
-                      🚚
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.statusBtnLabel,
-                        { color: '#92400e' },
-                      ]}
-                    >
+                    <Text style={styles.statusBtnIcon}>🚚</Text>
+                    <Text style={[styles.statusBtnLabel, { color: '#92400e' }]}>
                       Out for{"\n"}Delivery
                     </Text>
                   </TouchableOpacity>
@@ -558,75 +812,33 @@ export default function DeliveryDashboard() {
                     style={[
                       styles.statusBtn,
                       styles.statusBtnGreen,
-                      order.status === "Delivered" &&
-                      styles.disabledBtn,
+                      isTerminal && styles.disabledBtn,
                     ]}
-                    disabled={
-                      order.status === "Delivered"
-                    }
-                    onPress={() =>
-                      updateStatus(
-                        order._id,
-                        "Delivered"
-                      )
-                    }
+                    disabled={isTerminal}
+                    onPress={() => updateStatus(order._id, "Delivered")}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.statusBtnIcon}>
-                      ✅
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.statusBtnLabel,
-                        { color: '#166534' },
-                      ]}
-                    >
+                    <Text style={styles.statusBtnIcon}>✅</Text>
+                    <Text style={[styles.statusBtnLabel, { color: '#166534' }]}>
                       Delivered
                     </Text>
                   </TouchableOpacity>
-                  {/* CANCEL */}
 
+                  {/* CANCEL */}
                   <TouchableOpacity
                     style={[
                       styles.statusBtn,
                       styles.cancelBtn,
-                      (
-                        order.status === "Delivered" ||
-                        order.status === "Cancelled"
-                      ) && styles.disabledBtn
+                      isTerminal && styles.disabledBtn,
                     ]}
-
-                    disabled={
-                      order.status === "Delivered" ||
-                      order.status === "Cancelled"
-                    }
-
-                    onPress={() =>
-                      updateStatus(
-                        order._id,
-                        "Cancelled"
-                      )
-                    }
-
+                    disabled={isTerminal}
+                    onPress={() => updateStatus(order._id, "Cancelled")}
                     activeOpacity={0.8}
                   >
-
-                    <Text style={styles.statusBtnIcon}>
-                      ❌
-                    </Text>
-
-                    <Text
-                      style={[
-                        styles.statusBtnLabel,
-                        {
-                          color: "#991b1b"
-                        }
-                      ]}
-                    >
+                    <Text style={styles.statusBtnIcon}>❌</Text>
+                    <Text style={[styles.statusBtnLabel, { color: '#991b1b' }]}>
                       Cancel
                     </Text>
-
                   </TouchableOpacity>
 
                 </View>
@@ -651,12 +863,8 @@ const CARD_SHADOW = {
 };
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#f0f2f7',
-  },
+  root: { flex: 1, backgroundColor: '#f0f2f7' },
 
-  // ── Header ──────────────────────────────────────────
   header: {
     backgroundColor: '#0a1628',
     paddingTop: 52,
@@ -666,7 +874,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
-
   headerEyebrow: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 10,
@@ -674,19 +881,19 @@ const styles = StyleSheet.create({
     letterSpacing: 1.8,
     marginBottom: 4,
   },
-
   headerTitle: {
     color: '#ffffff',
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
-
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: 10,
+  headerLocation: {
+    color: '#10b981',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
   },
-
+  headerRight: { alignItems: 'flex-end', gap: 10 },
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -698,21 +905,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(16,185,129,0.3)',
   },
-
-  liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#10b981',
-  },
-
-  liveText: {
-    color: '#10b981',
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-  },
-
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#10b981' },
+  liveText: { color: '#10b981', fontSize: 10, fontWeight: '800', letterSpacing: 1.2 },
   logoutBtn: {
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -721,61 +915,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(239,68,68,0.3)',
   },
+  logoutText: { color: '#f87171', fontWeight: '700', fontSize: 12 },
 
-  logoutText: {
-    color: '#f87171',
-    fontWeight: '700',
-    fontSize: 12,
-  },
+  strip: { backgroundColor: '#0a1628', paddingHorizontal: 20, paddingBottom: 16 },
+  stripText: { color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: '500' },
 
-  // ── Strip ────────────────────────────────────────────
-  strip: {
-    backgroundColor: '#0a1628',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
+  list: { padding: 16, gap: 16 },
 
-  stripText: {
-    color: 'rgba(255,255,255,0.35)',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-
-  // ── List ──────────────────────────────────────────────
-  list: {
-    padding: 16,
-    gap: 16,
-  },
-
-  // ── Empty State ───────────────────────────────────────
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 80,
-  },
-
+  emptyState: { alignItems: 'center', paddingVertical: 80 },
   emptyEmoji: { fontSize: 52, marginBottom: 14 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#0a1628', marginBottom: 6 },
+  emptySub: { fontSize: 13, color: '#9ca3af', textAlign: 'center', lineHeight: 20 },
 
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0a1628',
-    marginBottom: 6,
-  },
-
-  emptySub: {
-    fontSize: 13,
-    color: '#9ca3af',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-
-  // ── Card ──────────────────────────────────────────────
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 18,
-    ...CARD_SHADOW,
-  },
+  card: { backgroundColor: '#ffffff', borderRadius: 20, padding: 18, ...CARD_SHADOW },
 
   cardTop: {
     flexDirection: 'row',
@@ -783,20 +935,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-
   orderIdBadge: {
     backgroundColor: '#0a1628',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
   },
-
-  orderIdText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
+  orderIdText: { color: '#ffffff', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
 
   statusBadge: {
     flexDirection: 'row',
@@ -806,18 +951,8 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 100,
   },
-
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-
-  statusText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
+  statusDot: { width: 7, height: 7, borderRadius: 4 },
+  statusText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
 
   amount: {
     fontSize: 28,
@@ -827,45 +962,19 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: '#f1f3f7',
-    marginBottom: 14,
-  },
+  divider: { height: 1, backgroundColor: '#f1f3f7', marginBottom: 14 },
 
-  // ── Info Block ────────────────────────────────────────
-  infoBlock: {
-    gap: 8,
-    marginBottom: 16,
-  },
+  infoBlock: { gap: 8, marginBottom: 16 },
+  infoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  infoIcon: { fontSize: 14, width: 20, marginTop: 1 },
+  infoValue: { fontSize: 14, color: '#1f2937', fontWeight: '500', lineHeight: 20 },
 
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-
-  infoIcon: {
-    fontSize: 14,
-    width: 20,
-    marginTop: 1,
-  },
-
-  infoValue: {
-    fontSize: 14,
-    color: '#1f2937',
-    fontWeight: '500',
-    lineHeight: 20,
-  },
-
-  // ── Items Block ───────────────────────────────────────
   itemsBlock: {
     backgroundColor: '#f8fafc',
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
   },
-
   itemsLabel: {
     fontSize: 10,
     fontWeight: '700',
@@ -873,41 +982,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     marginBottom: 10,
   },
+  itemRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  itemDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#d1d5db' },
+  itemName: { flex: 1, fontSize: 13, color: '#374151', fontWeight: '500' },
+  itemQty: { fontSize: 13, color: '#6b7280', fontWeight: '700' },
 
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
-  },
-
-  itemDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#d1d5db',
-  },
-
-  itemName: {
-    flex: 1,
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
-  },
-
-  itemQty: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '700',
-  },
-
-  // ── Action Buttons ─────────────────────────────────────
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-
+  actionRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   callBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -917,13 +997,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f2d1f',
     paddingVertical: 13,
     borderRadius: 14,
-    shadowColor: '#0f2d1f',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
     elevation: 4,
   },
-
   trackBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -933,26 +1008,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e3a8a',
     paddingVertical: 13,
     borderRadius: 14,
-    shadowColor: '#1e3a8a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
     elevation: 4,
   },
-
   actionIcon: { fontSize: 16 },
+  actionBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
 
-  actionBtnText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-
-  // ── Status Updater ──────────────────────────────────────
-  statusUpdaterLabel: {
-    marginBottom: 10,
-  },
-
+  statusUpdaterLabel: { marginBottom: 10 },
   statusUpdaterTitle: {
     fontSize: 10,
     fontWeight: '700',
@@ -960,10 +1021,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
 
-  statusRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  statusRow2: { flexDirection: 'row', gap: 8 },
 
   statusBtn: {
     flex: 1,
@@ -973,22 +1031,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     gap: 4,
   },
-
-  statusBtnOrange: {
-    backgroundColor: '#fef3c7',
-  },
-
-  statusBtnGreen: {
-    backgroundColor: '#dcfce7',
-  },
-  cancelBtn: {
-    backgroundColor: '#fee2e2',
-  },
-
-  statusBtnIcon: {
-    fontSize: 20,
-  },
-
+  statusBtnOrange: { backgroundColor: '#fef3c7' },
+  statusBtnGreen: { backgroundColor: '#dcfce7' },
+  cancelBtn: { backgroundColor: '#fee2e2' },
+  statusBtnIcon: { fontSize: 20 },
   statusBtnLabel: {
     fontSize: 10,
     fontWeight: '700',
@@ -997,11 +1043,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 14,
   },
-
-  disabledBtn: {
-    opacity: 0.45,
-  },
-
+  disabledBtn: { opacity: 0.4 },
 
   paymentSection: {
     backgroundColor: '#f8fafc',
@@ -1009,46 +1051,27 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 16,
   },
-
   paymentTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-
-  paymentTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#111827',
-  },
-
+  paymentTitle: { fontSize: 13, fontWeight: '700', color: '#111827' },
   paidBadge: {
     backgroundColor: '#dbeafe',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 100,
   },
-
-  paidBadgeText: {
-    color: '#2563eb',
-    fontWeight: '700',
-    fontSize: 11,
-  },
-
+  paidBadgeText: { color: '#2563eb', fontWeight: '700', fontSize: 11 },
   unpaidBadge: {
     backgroundColor: '#fef3c7',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 100,
   },
-
-  unpaidBadgeText: {
-    color: '#92400e',
-    fontWeight: '700',
-    fontSize: 11,
-  },
-
+  unpaidBadgeText: { color: '#92400e', fontWeight: '700', fontSize: 11 },
   qrBox: {
     backgroundColor: '#ffffff',
     borderRadius: 14,
@@ -1058,40 +1081,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-
-  qrEmoji: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-
-  qrText: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  qrImage: {
-    width: 180,
-    height: 180,
-    marginBottom: 12,
-  },
-
-  qrSub: {
-    fontSize: 11,
-    color: '#9ca3af',
-    marginTop: 4,
-    fontWeight: '500',
-  },
-
+  qrText: { fontSize: 13, color: '#6b7280', fontWeight: '600' },
+  qrImage: { width: 180, height: 180, marginBottom: 12 },
+  qrSub: { fontSize: 11, color: '#9ca3af', marginTop: 4, fontWeight: '500' },
   paymentBtn: {
     backgroundColor: '#2563eb',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
   },
-
-  paymentBtnText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
+  paymentBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 14 },
 });

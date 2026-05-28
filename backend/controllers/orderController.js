@@ -1,8 +1,13 @@
+
 const Order = require("../models/Order");
 const User = require("../models/User");
 
+// ======================================================
 // PLACE ORDER
+// ======================================================
+
 const placeOrder = async (req, res) => {
+
   try {
 
     const {
@@ -96,10 +101,14 @@ const placeOrder = async (req, res) => {
     });
 
   }
+
 };
 
 
+// ======================================================
 // ALL ORDERS
+// ======================================================
+
 const getAllOrders =
   async (req, res) => {
 
@@ -128,7 +137,10 @@ const getAllOrders =
   };
 
 
+// ======================================================
 // UPDATE STATUS
+// ======================================================
+
 const updateStatus =
   async (req, res) => {
 
@@ -153,24 +165,43 @@ const updateStatus =
 
       }
 
+      // ==========================================
+      // BLOCK INVALID GPS
+      // ==========================================
 
-      // Delivered / Cancelled
+      if (
+        status === "Out for Delivery"
+      ) {
+
+        const hasValidLocation =
+
+          existingOrder?.deliveryLocation?.lat &&
+          existingOrder?.deliveryLocation?.lng &&
+          existingOrder.deliveryLocation.lat !== 0 &&
+          existingOrder.deliveryLocation.lng !== 0;
+
+        if (!hasValidLocation) {
+
+          return res.status(400).json({
+
+            message:
+              "Delivery GPS not ready yet"
+
+          });
+
+        }
+
+      }
+
+      // ==========================================
+      // DELIVERED / CANCELLED
+      // ==========================================
+
       if (
         status === "Delivered"
         ||
         status === "Cancelled"
       ) {
-
-        if (
-          isNaN(lat) ||
-          isNaN(lng)
-        ) {
-
-          return res.status(400).json({
-            message:
-              "Invalid coordinates"
-          });
-        }
 
         const updatedOrder =
           await Order.findByIdAndUpdate(
@@ -205,8 +236,10 @@ const updateStatus =
 
       }
 
+      // ==========================================
+      // DELIVERY ASSIGNMENT
+      // ==========================================
 
-      // Delivery assignment
       let deliveryData = {};
 
       if (deliveryBoyId) {
@@ -234,6 +267,9 @@ const updateStatus =
 
       }
 
+      // ==========================================
+      // UPDATE ORDER
+      // ==========================================
 
       const updatedOrder =
         await Order.findByIdAndUpdate(
@@ -281,7 +317,10 @@ const updateStatus =
   };
 
 
+// ======================================================
 // UPDATE DELIVERY LOCATION
+// ======================================================
+
 const updateLocation =
   async (req, res) => {
 
@@ -292,6 +331,18 @@ const updateLocation =
 
       const lng =
         Number(req.body.lng);
+
+      if (
+        isNaN(lat) ||
+        isNaN(lng)
+      ) {
+
+        return res.status(400).json({
+          message:
+            "Invalid coordinates"
+        });
+
+      }
 
       const updatedOrder =
         await Order.findByIdAndUpdate(
@@ -348,7 +399,10 @@ const updateLocation =
   };
 
 
+// ======================================================
 // TRACK ORDER
+// ======================================================
+
 const trackOrder =
   async (req, res) => {
 
@@ -395,7 +449,10 @@ const trackOrder =
   };
 
 
+// ======================================================
 // MY ORDERS
+// ======================================================
+
 const getMyOrders =
   async (req, res) => {
 
@@ -412,8 +469,6 @@ const getMyOrders =
             createdAt: -1
           });
 
-
-      // REMOVE DUPLICATES
       const uniqueOrders =
         Array.from(
 
@@ -454,7 +509,10 @@ const getMyOrders =
   };
 
 
+// ======================================================
 // PAYMENT
+// ======================================================
+
 const updatePayment =
   async (req, res) => {
 
@@ -500,6 +558,8 @@ const updatePayment =
   };
 
 
+// ======================================================
+
 module.exports = {
 
   placeOrder,
@@ -511,3 +571,4 @@ module.exports = {
   updatePayment
 
 };
+
