@@ -166,34 +166,6 @@ const updateStatus =
       }
 
       // ==========================================
-      // BLOCK INVALID GPS
-      // ==========================================
-
-      if (
-        status === "Out for Delivery"
-      ) {
-
-        const hasValidLocation =
-
-          existingOrder?.deliveryLocation?.lat &&
-          existingOrder?.deliveryLocation?.lng &&
-          existingOrder.deliveryLocation.lat !== 0 &&
-          existingOrder.deliveryLocation.lng !== 0;
-
-        if (!hasValidLocation) {
-
-          return res.status(400).json({
-
-            message:
-              "Delivery GPS not ready yet"
-
-          });
-
-        }
-
-      }
-
-      // ==========================================
       // DELIVERED / CANCELLED
       // ==========================================
 
@@ -571,4 +543,3 @@ module.exports = {
   updatePayment
 
 };
-
