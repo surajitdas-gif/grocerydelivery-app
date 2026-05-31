@@ -1,98 +1,163 @@
-const Otp = require("../models/Otp");
-const jwt = require("jsonwebtoken");
+// const Otp = require("../models/Otp");
+// const jwt = require("jsonwebtoken");
 
-const verifyOtp = async (req, res) => {
+// const verifyOtp = async (req, res) => {
 
-    try {
+//     try {
 
-        const { phone, otp } = req.body;
+//         const { phone, otp } = req.body;
 
-        if (!phone || !otp) {
+//         if (!phone || !otp) {
 
-            return res.status(400).json({
+//             return res.status(400).json({
 
-                success: false,
-                message: "Phone and OTP required"
+//                 success: false,
+//                 message: "Phone and OTP required"
 
-            });
+//             });
 
-        }
+//         }
 
-        const otpData = await Otp.findOne({ phone });
+//         const otpData = await Otp.findOne({ phone });
 
-        if (!otpData) {
+//         if (!otpData) {
 
-            return res.status(400).json({
+//             return res.status(400).json({
 
-                success: false,
-                message: "OTP not found"
+//                 success: false,
+//                 message: "OTP not found"
 
-            });
+//             });
 
-        }
+//         }
 
-        if (Date.now() > otpData.expiresAt) {
+//         if (Date.now() > otpData.expiresAt) {
 
-            await Otp.deleteMany({ phone });
+//             await Otp.deleteMany({ phone });
 
-            return res.status(400).json({
+//             return res.status(400).json({
 
-                success: false,
-                message: "OTP expired"
+//                 success: false,
+//                 message: "OTP expired"
 
-            });
+//             });
 
-        }
+//         }
 
-        if (otpData.otp !== otp) {
+//         if (otpData.otp !== otp) {
 
-            return res.status(400).json({
+//             return res.status(400).json({
 
-                success: false,
-                message: "Wrong OTP"
+//                 success: false,
+//                 message: "Wrong OTP"
 
-            });
+//             });
 
-        }
+//         }
 
-        const token = jwt.sign(
+//         const token = jwt.sign(
 
-            {
-                phone
-            },
+//             {
+//                 phone
+//             },
 
-            process.env.JWT_SECRET,
+//             process.env.JWT_SECRET,
 
-            {
-                expiresIn: "7d"
-            }
+//             {
+//                 expiresIn: "7d"
+//             }
 
-        );
+//         );
 
-        await Otp.deleteMany({ phone });
+//         await Otp.deleteMany({ phone });
 
-        res.json({
+//         res.json({
 
-            success: true,
-            message: "Login success",
-            token
+//             success: true,
+//             message: "Login success",
+//             token
 
-        });
+//         });
 
-    }
-    catch (error) {
+//     }
+//     catch (error) {
 
-        console.error(error);
+//         console.error(error);
 
-        res.status(500).json({
+//         res.status(500).json({
 
-            success: false,
-            message: error.message
+//             success: false,
+//             message: error.message
 
-        });
+//         });
 
-    }
+//     }
 
-}
+// }
 
-module.exports = verifyOtp;
+// module.exports = verifyOtp;
+
+
+// const Otp = require("../models/Otp");
+// const User = require("../models/User");
+// const jwt = require("jsonwebtoken");
+
+// const verifyOtp = async (req, res) => {
+//   try {
+//     const { phone, otp } = req.body;
+
+//     const otpRecord = await Otp.findOne({ phone });
+
+//     if (!otpRecord) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "OTP not found",
+//       });
+//     }
+
+//     if (otpRecord.expiresAt < new Date()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "OTP expired",
+//       });
+//     }
+
+//     if (otpRecord.otp !== otp) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid OTP",
+//       });
+//     }
+
+//     let user = await User.findOne({ phone });
+
+//     if (!user) {
+//       user = await User.create({
+//         phone,
+//       });
+//     }
+
+//     await Otp.deleteMany({ phone });
+
+//     const token = jwt.sign(
+//       { id: user._id },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "30d" }
+//     );
+
+//     res.json({
+//       success: true,
+//       token,
+//       user,
+//     });
+
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Server Error",
+//     });
+//   }
+// };
+
+// module.exports = verifyOtp;

@@ -77,15 +77,10 @@ export default function CartScreen() {
       return;
     }
 
-    // 🔥 OPEN MAP FIRST
-    router.push({
-      pathname: "/address-form",
-      params: {
-        lat: "22.655",
-        lng: "88.38",
-      },
-    });
-  };
+    // ✅ OPEN SELECT LOCATION SCREEN
+    router.push("/select-location");
+  }
+
   const handleCoupon = () => {
     if (coupon.trim().toUpperCase() === 'FRESH10') {
       setCouponApplied(true);

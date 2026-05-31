@@ -40,13 +40,18 @@
 // });
 
 // module.exports = mongoose.model('User', userSchema);
-const mongoose = require('mongoose');
+
+
+
+
+
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
 
   name: {
     type: String,
-    required: true,
+    required: true
   },
 
   email: {
@@ -65,17 +70,17 @@ const userSchema = new mongoose.Schema({
 
   password: {
     type: String,
-    required: true,
+    default: null
   },
 
   role: {
     type: String,
     enum: [
-      'user',
-      'delivery',
-      'admin'
+      "user",
+      "delivery",
+      "admin"
     ],
-    default: 'user',
+    default: "user"
   },
 
   isPhoneVerified: {
@@ -85,20 +90,19 @@ const userSchema = new mongoose.Schema({
 
   address: {
     type: String,
-    default: '',
+    default: ""
   },
 
   profileImage: {
     type: String,
-    default: '',
-  },
+    default: ""
+  }
 
-},{
-timestamps:true
+}, {
+  timestamps: true
 });
 
-module.exports =
-mongoose.model(
-'User',
-userSchema
+module.exports = mongoose.model(
+  "User",
+  userSchema
 );

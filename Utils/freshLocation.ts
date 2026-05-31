@@ -59,7 +59,7 @@ export async function getFreshLocation(
 
     const last = await Location.getLastKnownPositionAsync({
       maxAge: 2 * 60 * 1000,  // must be within 2 minutes
-      requiredAccuracy: 200,   // must be within 200 metres
+      requiredAccuracy: 80,   // must be within 200 metres
     });
 
     if (last) {

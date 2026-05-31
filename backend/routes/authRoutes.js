@@ -1,52 +1,81 @@
-const express =
-require("express");
+// const express =
+// require("express");
 
-const router =
-express.Router();
+// const router =
+// express.Router();
+
+// const {
+
+// signup,
+// login,
+// updateProfile,
+// logout,
+// sendOtp,
+// loginWithOtp
+
+// } =
+// require(
+// "../controllers/authController"
+// );
+
+// router.post(
+// "/signup",
+// signup
+// );
+
+// router.post(
+// "/login",
+// login
+// );
+
+// router.put(
+// "/update-profile/:id",
+// updateProfile
+// );
+
+// router.post(
+// "/logout",
+// logout
+// );
+
+// router.post(
+// "/send-otp",
+// sendOtp
+// );
+
+// router.post(
+// "/login-with-otp",
+// loginWithOtp
+// );
+
+// module.exports =
+// router;
+
+const express = require("express");
+
+const router = express.Router();
 
 const {
+  signup,
+  login,
+  updateProfile,
+  logout,
+  sendOtp,
+  verifyOtp,
+  loginWithOtp,
+} = require("../controllers/authController");
 
-signup,
-login,
-updateProfile,
-logout,
-sendOtp,
-loginWithOtp
+// Authentication
+router.post("/signup", signup);
+router.post("/login", login);
+router.post("/logout", logout);
 
-} =
-require(
-"../controllers/authController"
-);
+// OTP Authentication
+router.post("/send-otp", sendOtp);
+router.post("/verify-otp", verifyOtp);
+router.post("/login-with-otp", loginWithOtp);
 
-router.post(
-"/signup",
-signup
-);
+// Profile
+router.put("/update-profile/:id", updateProfile);
 
-router.post(
-"/login",
-login
-);
-
-router.put(
-"/update-profile/:id",
-updateProfile
-);
-
-router.post(
-"/logout",
-logout
-);
-
-router.post(
-"/send-otp",
-sendOtp
-);
-
-router.post(
-"/login-with-otp",
-loginWithOtp
-);
-
-module.exports =
-router;
+module.exports = router;

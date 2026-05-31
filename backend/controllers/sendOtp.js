@@ -1,80 +1,83 @@
-const axios = require("axios");
-const Otp = require("../models/Otp");
+// const axios = require("axios");
+// const Otp = require("../models/Otp");
 
-const sendOtp = async (req, res) => {
+// const sendOtp = async (req, res) => {
 
-    try {
+//     try {
 
-        const { phone } = req.body;
+//         const { phone } = req.body;
 
-        if (!phone) {
+//         if (!phone) {
 
-            return res.status(400).json({
-                success: false,
-                message: "Phone number required"
-            });
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Phone number required"
+//             });
 
-        }
-
-
-        // Generate OTP
-        const otp = Math.floor(
-            100000 + Math.random() * 900000
-        ).toString();
+//         }
 
 
-        // Send SMS
-        await axios.post(
-            "https://www.fast2sms.com/dev/bulkV2",
-            {
-                route: "otp",
-                variables_values: otp,
-                numbers: phone
-            },
-            {
-                headers: {
-                    authorization: process.env.FAST2SMS_KEY
-                }
-            }
-        );
+//         // Generate OTP
+//         const otp = Math.floor(
+//             100000 + Math.random() * 900000
+//         ).toString();
 
 
-        // Save in MongoDB
-        await Otp.deleteMany({ phone });
+//         // Send SMS
+//         await axios.post(
+//             "https://www.fast2sms.com/dev/bulkV2",
+//             {
+//                 route: "otp",
+//                 variables_values: otp,
+//                 numbers: phone
+//             },
+//             {
+//                 headers: {
+//                     authorization: process.env.FAST2SMS_KEY
+//                 }
+//             }
+//         );
 
-        await Otp.create({
 
-            phone,
-            otp,
+//         // Save in MongoDB
+//         await Otp.deleteMany({ phone });
 
-            expiresAt: new Date(
-                Date.now() + 5 * 60 * 1000
-            )
+//         await Otp.create({
 
-        });
+//             phone,
+//             otp,
+
+//             expiresAt: new Date(
+//                 Date.now() + 5 * 60 * 1000
+//             )
+
+//         });
 
 
-        res.json({
+//         res.json({
 
-            success: true,
-            message: "OTP sent successfully"
+//             success: true,
+//             message: "OTP sent successfully"
 
-        });
+//         });
 
-    }
-    catch (error) {
+//     }
+//     catch (error) {
 
-        console.error(error);
+//         console.error(error);
 
-        res.status(500).json({
+//         res.status(500).json({
 
-            success: false,
-            message: error.message
+//             success: false,
+//             message: error.message
 
-        });
+//         });
 
-    }
+//     }
 
-};
+// };
 
-module.exports = sendOtp;
+// module.exports = sendOtp;
+
+
+

@@ -1,3 +1,45 @@
+// {
+//   "expo": {
+//     "name": "Freshcart",
+//     "slug": "freshcart",
+//     "version": "1.0.0",
+//     "orientation": "portrait",
+//     "scheme": "freshcart",
+//     "userInterfaceStyle": "automatic",
+
+//     "ios": {
+//       "supportsTablet": true
+//     },
+
+//     "android": {
+//       "edgeToEdgeEnabled": true,
+//       "predictiveBackGestureEnabled": false,
+//       "package": "com.freshcart.app",
+//       "config": {
+//         "googleMaps": {
+//           "apiKey": "AIzaSyB34LD_TXtjI8pWB5NguZ_zetFErX9ywGY"
+//         }
+//       }
+//     },
+
+//     "web": {
+//       "output": "static"
+//     },
+
+//     "plugins": [
+//       "expo-router",
+//       "expo-web-browser"
+//     ],
+
+//     "extra": {
+//       "router": {},
+//       "eas": {
+//         "projectId": "b54f928d-b475-41d2-901d-1fc850c963ee"
+//       }
+//     }
+//   }
+// }
+
 {
   "expo": {
     "name": "Freshcart",
@@ -15,6 +57,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.freshcart.app",
+      "googleServicesFile": "./google-services.json",
+
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyB34LD_TXtjI8pWB5NguZ_zetFErX9ywGY"
