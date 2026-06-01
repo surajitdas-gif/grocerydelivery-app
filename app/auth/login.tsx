@@ -564,7 +564,7 @@ export default function LoginScreen() {
       startResendTimer();
       Alert.alert(
         'OTP Sent ✅',
-        'Please check your WhatsApp for the OTP.'
+        'Please check your phone for the OTP.'
       );
     } catch (error: any) {
       console.error(error);
