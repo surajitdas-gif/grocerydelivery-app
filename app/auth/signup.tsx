@@ -941,6 +941,9 @@ export default function SignupScreen() {
         return;
       }
 
+      if (data?.otp) {
+        setOtp(data.otp.split(''));
+      }
       startResendTimer();
       goToStep(3);
     } catch (err: any) {

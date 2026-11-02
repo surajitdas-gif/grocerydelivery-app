@@ -562,9 +562,12 @@ export default function LoginScreen() {
 
       setOtpSent(true);
       startResendTimer();
+      if (data.otp) {
+        setOtp(data.otp);
+      }
       Alert.alert(
         'OTP Sent ✅',
-        'Please check your phone for the OTP.'
+        data.otp ? `Your OTP is: ${data.otp}` : 'Please check your phone for the OTP.'
       );
     } catch (error: any) {
       console.error(error);
