@@ -44,4 +44,8 @@ paymentReceived: {
   createdAt: { type: Date, default: Date.now },
 });
 
+orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ deliveryBoyId: 1 });
+
 module.exports = mongoose.model('Order', orderSchema);

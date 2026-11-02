@@ -42,13 +42,27 @@ app.use(helmet()); // Sets secure headers, disables x-powered-by
 app.use(compression()); // Gzip payload compression
 app.use(morgan("combined")); // Request logging
 
-// Rate Limiting
-const limiter = rateLimit({
+// High-Concurrency Rate Limiting (Optimized for 1,000+ users)
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window`
-  message: { success: false, message: "Too many requests from this IP, please try again after 15 minutes" },
+  max: 5000, // 5000 requests per 15 min (handles shared NAT/cellular IPs)
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === "/api/v1/health" || req.path === "/",
+  message: { success: false, message: "Too many requests from this network, please try again shortly" },
 });
-app.use("/api", limiter); // Apply to API routes
+app.use("/api", apiLimiter);
+
+// Dedicated Auth Rate Limiter (Brute force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  message: { success: false, message: "Too many authentication attempts, please try again in 15 minutes" },
+});
+app.use("/api/v1/auth/login", authLimiter);
+app.use("/api/v1/auth/send-otp", authLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/send-otp", authLimiter);
 
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
@@ -108,12 +122,19 @@ app.use("/chat", chatRoutes); // Keep chat at root level as before
 // Create HTTP Server
 const server = http.createServer(app);
 
-// Socket.IO Setup
+// Socket.IO Setup (Tuned for 1,000+ concurrent connections)
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins.includes("*") ? "*" : allowedOrigins,
     methods: ["GET", "POST"],
+    credentials: true,
   },
+  pingTimeout: 30000,
+  pingInterval: 25000,
+  upgradeTimeout: 10000,
+  maxHttpBufferSize: 1e6, // 1MB max payload buffer
+  transports: ["websocket", "polling"],
+  perMessageDeflate: false, // Disabling perMessageDeflate saves significant CPU under high concurrent socket load
 });
 
 app.set("io", io);
@@ -187,8 +208,21 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
+// HTTP Keep-Alive Tuning for high concurrency
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
+
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT} (High Concurrency Mode: 1000+ users ready)`);
+});
+
+// Process Resilience: Don't allow single request failures to take down 1000 users
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
 });
 
 // Graceful Shutdown

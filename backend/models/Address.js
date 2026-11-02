@@ -30,6 +30,8 @@ const addressSchema =
     timestamps: true,
   });
 
+addressSchema.index({ userId: 1 });
+
 module.exports =
   mongoose.model(
     'Address',

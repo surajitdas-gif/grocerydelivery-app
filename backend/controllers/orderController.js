@@ -118,11 +118,9 @@ const getAllOrders =
 
     try {
 
-      const orders =
-        await Order.find()
-          .sort({
-            createdAt: -1
-          });
+      const orders = await Order.find()
+        .sort({ createdAt: -1 })
+        .lean();
 
       res.json(
         orders
@@ -444,16 +442,11 @@ const getMyOrders =
         return res.status(403).json({ message: "Not authorized to view these orders" });
       }
 
-      const orders =
-        await Order.find({
-
-          userId:
-            req.params.userId
-
-        })
-          .sort({
-            createdAt: -1
-          });
+      const orders = await Order.find({
+        userId: req.params.userId
+      })
+        .sort({ createdAt: -1 })
+        .lean();
 
       const uniqueOrders =
         Array.from(
