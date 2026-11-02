@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Animated,
+  Platform,
 } from 'react-native';
 
 interface ProductCardProps {
@@ -111,10 +112,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 3px 6px rgba(0, 0, 0, 0.08)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 3 },
+      },
+    }),
     borderWidth: 1,
     borderColor: '#f1f1f1',
     position: 'relative',

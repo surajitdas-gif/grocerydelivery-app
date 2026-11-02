@@ -10,6 +10,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import ProductCard from '../components/ProductCard';
 
@@ -491,29 +492,38 @@ const RADIUS_LG = 24;
 const RADIUS_MD = 16;
 const RADIUS_SM = 12;
 
-const SHADOW_LIGHT = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.04,
-  shadowRadius: 8,
-  elevation: 2,
-};
+const SHADOW_LIGHT = Platform.select({
+  web: { boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)' },
+  default: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+});
 
-const SHADOW_ELEVATED = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  elevation: 5,
-};
+const SHADOW_ELEVATED = Platform.select({
+  web: { boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)' },
+  default: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+});
 
-const SHADOW_CARD_BTN = {
-  shadowColor: BRAND,
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.15,
-  shadowRadius: 8,
-  elevation: 4,
-};
+const SHADOW_CARD_BTN = Platform.select({
+  web: { boxShadow: '0px 4px 8px rgba(252, 128, 25, 0.15)' },
+  default: {
+    shadowColor: BRAND,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+});
 
 const styles = StyleSheet.create({
   root: {
