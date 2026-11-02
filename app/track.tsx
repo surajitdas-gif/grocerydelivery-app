@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
 
 import { MapView, Marker, Polyline, MapViewDirections } from "../components/MapComponents";
@@ -467,10 +468,15 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 14,
     elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
+    ...Platform.select({
+      web: { boxShadow: "0px 2px 6px rgba(0,0,0,0.12)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.12,
+        shadowRadius: 6,
+      },
+    }),
   },
 
   backText: {
@@ -486,10 +492,15 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 4,
     elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
+    ...Platform.select({
+      web: { boxShadow: "0px 2px 4px rgba(0,0,0,0.15)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+    }),
   },
 
   deliveryEmoji: {
@@ -522,10 +533,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 22,
     elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 14,
+    ...Platform.select({
+      web: { boxShadow: "0px 4px 14px rgba(0,0,0,0.12)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 14,
+      },
+    }),
   },
 
   statusRow: {

@@ -12,6 +12,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -549,21 +550,27 @@ export default function AdminDashboard() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const SHADOW_SM = {
-  shadowColor: '#B8962E',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
-  elevation: 2,
-};
+const SHADOW_SM = Platform.select({
+  web: { boxShadow: '0px 2px 8px rgba(184, 150, 46, 0.08)' },
+  default: {
+    shadowColor: '#B8962E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+});
 
-const SHADOW_MD = {
-  shadowColor: '#1A1611',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.10,
-  shadowRadius: 14,
-  elevation: 4,
-};
+const SHADOW_MD = Platform.select({
+  web: { boxShadow: '0px 4px 14px rgba(26, 22, 17, 0.10)' },
+  default: {
+    shadowColor: '#1A1611',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 14,
+    elevation: 4,
+  },
+});
 
 const styles = StyleSheet.create({
 
