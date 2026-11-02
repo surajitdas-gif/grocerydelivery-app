@@ -12,12 +12,7 @@ import {
   View,
 } from "react-native";
 
-import MapView, {
-  Marker,
-  Polyline,
-} from "react-native-maps";
-
-import MapViewDirections from "react-native-maps-directions";
+import { MapView, Marker, Polyline, MapViewDirections } from "../components/MapComponents";
 
 import {
   router,
@@ -28,6 +23,7 @@ import {
 import { socket } from "@/socket";
 
 import { getFreshLocation } from "@/Utils/freshLocation";
+import { secureFetch } from "@/src/utils/api";
 
 // ─── Haversine distance (metres) ─────────────────────────────────────────────
 
@@ -143,7 +139,7 @@ export default function TrackOrder() {
     const loadOrder = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
+        const res = await secureFetch(
           `${BASE_URL}/api/orders/track/${orderId}`
         );
         const data = await res.json();

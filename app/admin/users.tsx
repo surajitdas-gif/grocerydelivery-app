@@ -10,6 +10,7 @@ import {
     Text,
     View,
 } from 'react-native';
+import { secureFetch } from '../../src/utils/api';
 
 const API_URL =
     'https://grocerydelivery-backend.onrender.com';
@@ -37,7 +38,7 @@ export default function AdminUsers() {
             try {
 
                 const res =
-                    await fetch(
+                    await secureFetch(
                         `${API_URL}/api/admin/users`
                     );
 

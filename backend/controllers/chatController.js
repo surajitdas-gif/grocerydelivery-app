@@ -46,7 +46,7 @@ const chatBot = async (req, res) => {
         ) {
 
             const latestOrder =
-                await Order.findOne()
+                await Order.findOne({ userId: req.user._id })
                     .sort({
                         createdAt: -1
                     });

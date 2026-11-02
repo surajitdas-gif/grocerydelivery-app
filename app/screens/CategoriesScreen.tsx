@@ -91,8 +91,8 @@ const categories = [
     bg: '#083344',
     homeCategory: 'Cleaning',
   },
-  { name: 'Medicine', emoji: '💊', count: 24, tag: 'Daily Fresh', accent: '#60a5fa', bg: '#172554', homeCategory: 'Medicine' },
-  { name: 'Others', emoji: '📦', count: 24, tag: 'Daily Fresh', accent: '#60a5fa', bg: '#172554', homeCategory: 'Others' },
+  { name: 'Medicine', emoji: '💊', count: 24, tag: 'Health Care', accent: '#ef4444', bg: '#450a0a', homeCategory: 'Medicine' },
+  { name: 'Others', emoji: '📦', count: 24, tag: 'Essentials', accent: '#78716c', bg: '#1c1917', homeCategory: 'Others' },
 ];
 
 export default function CategoriesScreen() {

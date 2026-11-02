@@ -249,7 +249,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import { MapView, Marker } from "../components/MapComponents";
 import * as Location from "expo-location";
 
 export default function SelectLocation() {

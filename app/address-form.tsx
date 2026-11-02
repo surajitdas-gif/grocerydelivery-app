@@ -19,7 +19,7 @@ import {
 } from "expo-router";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { secureFetch } from '../src/utils/api';
 const API_URL =
   "https://grocerydelivery-backend.onrender.com";
 
@@ -123,7 +123,7 @@ export default function AddressForm() {
         // LOAD SAVED ADDRESS
 
         const res =
-          await fetch(
+          await secureFetch(
             `${API_URL}/api/address/${uid}`
           );
 
@@ -218,7 +218,7 @@ export default function AddressForm() {
         // SAVE ADDRESS TO BACKEND
         // ========================================
 
-        await fetch(
+        await secureFetch(
           `${API_URL}/api/address/save`,
           {
 

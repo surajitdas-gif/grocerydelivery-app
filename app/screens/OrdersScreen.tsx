@@ -11,8 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { io } from "socket.io-client";
-
+import { socket } from "@/socket";
+import { secureFetch } from "../../src/utils/api";
 // ── Status config ─────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<
@@ -74,12 +74,6 @@ const getStatusConfig =
       ];
 
   };
-const socket = io(
-  "https://grocerydelivery-backend.onrender.com",
-  {
-    transports: ["websocket"]
-  }
-);
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function OrdersScreen() {
@@ -152,7 +146,7 @@ export default function OrdersScreen() {
         return;
       }
 
-      const res = await fetch(
+      const res = await secureFetch(
         `https://grocerydelivery-backend.onrender.com/api/orders/my-orders/${user._id}`
       );
 

@@ -13,6 +13,7 @@ import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 
 import { useCart } from '../src/context/CartContext';
+import { secureFetch } from '../src/utils/api';
 
 export default function PaymentScreen() {
 
@@ -168,7 +169,7 @@ export default function PaymentScreen() {
       const BASE_URL =
         'https://grocerydelivery-backend.onrender.com/api';
 
-      const res = await fetch(
+      const res = await secureFetch(
         `${BASE_URL}/orders/place-order`,
         {
           method: 'POST',
@@ -323,7 +324,7 @@ export default function PaymentScreen() {
         payload
       );
 
-      const res = await fetch(
+      const res = await secureFetch(
         'https://grocerydelivery-backend.onrender.com/api/orders/place-order',
         {
           method: 'POST',

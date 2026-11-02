@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 import { router } from 'expo-router';
-
+import { secureFetch } from '../../src/utils/api';
 type Message = {
   id: string;
   from: 'user' | 'bot';
@@ -93,7 +93,7 @@ export default function ContactChatScreen() {
 
     try {
 
-      const response = await fetch(
+      const response = await secureFetch(
         'https://grocerydelivery-backend.onrender.com/chat',
         {
           method: 'POST',

@@ -19,7 +19,7 @@ import {
 
 import { socket } from "@/socket";
 import { getFreshLocation } from '@/Utils/freshLocation';
-
+import { secureFetch } from '../../src/utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
@@ -233,7 +233,7 @@ export default function DeliveryDashboard() {
       try {
 
         const res =
-          await fetch(
+          await secureFetch(
             `${BASE_URL}/api/orders/all-orders`
           );
 
@@ -315,7 +315,7 @@ export default function DeliveryDashboard() {
                 lng
               });
 
-              await fetch(
+              await secureFetch(
 
                 `${BASE_URL}/api/orders/update-location/${orderId}`,
 
@@ -390,7 +390,7 @@ export default function DeliveryDashboard() {
         }
 
         const res =
-          await fetch(
+          await secureFetch(
 
             `${BASE_URL}/api/orders/status/${id}`,
 
@@ -469,7 +469,7 @@ export default function DeliveryDashboard() {
       try {
 
         const res =
-          await fetch(
+          await secureFetch(
 
             `${BASE_URL}/api/orders/payment/${id}`,
 

@@ -4,6 +4,8 @@ require("express");
 const router =
 express.Router();
 
+const { protect } = require("../middleware/authMiddleware");
+
 const {
 chatBot
 } = require(
@@ -12,6 +14,7 @@ chatBot
 
 router.post(
 "/",
+protect,
 chatBot
 );
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { secureFetch } from '../../src/utils/api';
 import {
   Alert,
   StyleSheet,
@@ -55,7 +55,7 @@ export default function ReportScreen() {
         payload
       );
 
-      const res = await fetch(
+      const res = await secureFetch(
         'https://grocerydelivery-backend.onrender.com/api/reports/create',
         {
           method: 'POST',

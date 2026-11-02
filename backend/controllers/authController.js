@@ -1,483 +1,14 @@
-// const User = require("../models/User");
-// const Otp = require("../models/Otp");
-
-// const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
-
-// // SIGNUP
-// const signup = async (req,res)=>{
-
-// try{
-
-// const {
-// name,
-// email,
-// phone,
-// password,
-// role
-// }=req.body;
-
-// if(
-// (!email && !phone)
-// ||
-// !password
-// ||
-// !name
-// ){
-
-// return res.status(400)
-// .json({
-// message:
-// "Missing required fields"
-// });
-
-// }
-
-// const existingUser =
-// await User.findOne({
-
-// $or:[
-// ...(email?[{email}]:[]),
-// ...(phone?[{phone}]:[])
-// ]
-
-// });
-
-// if(existingUser){
-
-// return res.status(400)
-// .json({
-// message:
-// "User already exists"
-// });
-
-// }
-
-// const hashedPassword =
-// await bcrypt.hash(
-// password,
-// 10
-// );
-
-// const newUser =
-// new User({
-
-// name,
-
-// email:
-// email || null,
-
-// phone:
-// phone || null,
-
-// password:
-// hashedPassword,
-
-// role:
-// role || "user"
-
-// });
-
-// await newUser.save();
-
-// res.status(201)
-// .json({
-
-// success:true,
-// message:
-// "User created successfully"
-
-// });
-
-// }
-
-// catch(error){
-
-// res.status(500)
-// .json({
-
-// success:false,
-// message:error.message
-
-// });
-
-// }
-
-// };
-
-
-// // LOGIN
-// const login =
-// async(req,res)=>{
-
-// try{
-
-// const {
-// email,
-// phone,
-// password
-// }=req.body;
-
-// const user =
-// await User.findOne(
-
-// email
-// ?
-// {email}
-// :
-// {phone}
-
-// );
-
-// if(!user){
-
-// return res.status(400)
-// .json({
-
-// success:false,
-// message:
-// "User not found"
-
-// });
-
-// }
-
-// const isMatch =
-// await bcrypt.compare(
-// password,
-// user.password
-// );
-
-// if(!isMatch){
-
-// return res.status(400)
-// .json({
-
-// message:
-// "Invalid password"
-
-// });
-
-// }
-
-// const token =
-// jwt.sign(
-
-// {
-// id:user._id
-// },
-
-// process.env.JWT_SECRET,
-
-// {
-// expiresIn:"7d"
-// }
-
-// );
-
-// res.json({
-
-// success:true,
-// message:
-// "Login successful",
-// token,
-// user
-
-// });
-
-// }
-
-// catch(error){
-
-// res.status(500)
-// .json({
-
-// success:false,
-// message:error.message
-
-// });
-
-// }
-
-// };
-
-
-// // UPDATE PROFILE
-// const updateProfile =
-// async(req,res)=>{
-
-// try{
-
-// const {
-// name,
-// phone,
-// address
-// }=req.body;
-
-// const updatedUser =
-// await User.findByIdAndUpdate(
-
-// req.params.id,
-
-// {
-// name,
-// phone,
-// address
-// },
-
-// {
-// new:true
-// }
-
-// );
-
-// res.json(
-// updatedUser
-// );
-
-// }
-
-// catch(error){
-
-// res.status(500)
-// .json({
-
-// message:error.message
-
-// });
-
-// }
-
-// };
-
-
-// // LOGOUT
-// const logout =
-// (req,res)=>{
-
-// res.json({
-
-// success:true,
-// message:
-// "Logout successful"
-
-// });
-
-// };
-
-
-// // SEND OTP
-// const sendOtp =
-// async(req,res)=>{
-
-// try{
-
-// const {phone}
-// =
-// req.body;
-
-// if(!phone){
-
-// return res.status(400)
-// .json({
-
-// success:false,
-// message:
-// "Phone number required"
-
-// });
-
-// }
-
-// const otp =
-// process.env.DEMO_MODE==="true"
-// ?
-// process.env.DEMO_OTP
-// :
-// Math.floor(
-// 100000+
-// Math.random()*900000
-// ).toString();
-
-// await Otp.deleteMany({
-// phone
-// });
-
-// await Otp.create({
-
-// phone,
-// otp,
-
-// expiresAt:
-// new Date(
-// Date.now()+
-// 5*60*1000
-// )
-
-// });
-
-// res.json({
-
-// success:true,
-// message:
-// "OTP sent"
-
-// });
-
-// }
-
-// catch(error){
-
-// res.status(500)
-// .json({
-
-// success:false,
-// message:error.message
-
-// });
-
-// }
-
-// };
-
-
-// // LOGIN WITH OTP
-// const loginWithOtp =
-// async(req,res)=>{
-
-// try{
-
-// const {
-// phone,
-// otp,
-// role
-// }=req.body;
-
-// const otpData =
-// await Otp.findOne({
-// phone
-// });
-
-// if(!otpData){
-
-// return res.status(400)
-// .json({
-
-// success:false,
-// message:
-// "OTP not found"
-
-// });
-
-// }
-
-// if(
-// Date.now()
-// >
-// otpData.expiresAt
-// ){
-
-// return res.status(400)
-// .json({
-
-// success:false,
-// message:
-// "OTP expired"
-
-// });
-
-// }
-
-// const user =
-// await User.findOne({
-
-// phone,
-
-// ...(role
-// ?
-// {role}
-// :{})
-// });
-
-// if(!user){
-
-// return res.status(404)
-// .json({
-
-// success:false,
-// message:
-// "User not found"
-
-// });
-
-// }
-
-// const token =
-// jwt.sign(
-
-// {
-// id:user._id
-// },
-
-// process.env.JWT_SECRET,
-
-// {
-// expiresIn:"7d"
-// }
-
-// );
-
-// await Otp.deleteMany({
-// phone
-// });
-
-// res.json({
-
-// success:true,
-// message:
-// "Login successful",
-// token,
-// user
-
-// });
-
-// }
-
-// catch(error){
-
-// res.status(500)
-// .json({
-
-// success:false,
-// message:error.message
-
-// });
-
-// }
-
-// };
-
-// module.exports = {
-
-// signup,
-// login,
-// updateProfile,
-// logout,
-// sendOtp,
-// loginWithOtp
-
-// };
-
-
-
-
-
-
 const User = require("../models/User");
-const Otp = require("../models/Otp");
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const twilio = require("twilio");
+
+const twilioClient = twilio(
+  process.env.TWILIO_ACCOUNT_SID,
+  process.env.TWILIO_AUTH_TOKEN
+);
+const VERIFY_SID = process.env.TWILIO_VERIFY_SID;
 
 // SIGNUP
 const signup = async (req, res) => {
@@ -547,7 +78,7 @@ const signup = async (req, res) => {
   }
 };
 
-// LOGIN
+
 const login = async (req, res) => {
 
   try {
@@ -605,7 +136,7 @@ const login = async (req, res) => {
 
 };
 
-// UPDATE PROFILE
+
 const updateProfile = async (req, res) => {
 
   try {
@@ -618,7 +149,7 @@ const updateProfile = async (req, res) => {
 
     const updatedUser =
       await User.findByIdAndUpdate(
-        req.params.id,
+        req.user._id,
         {
           name,
           phone,
@@ -642,7 +173,7 @@ const updateProfile = async (req, res) => {
 
 };
 
-// LOGOUT
+
 const logout = (req, res) => {
 
   res.json({
@@ -652,7 +183,7 @@ const logout = (req, res) => {
 
 };
 
-// SEND OTP
+// SEND OTP —
 const sendOtp = async (req, res) => {
 
   try {
@@ -666,21 +197,16 @@ const sendOtp = async (req, res) => {
       });
     }
 
-    const otp = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
+    // Twilio Verify sends the SMS automatically
+    const verification = await twilioClient.verify.v2
+      .services(VERIFY_SID)
+      .verifications
+      .create({
+        to: phone,       // must be E.164 format e.g. +919876543210
+        channel: "sms"  // sends a real SMS
+      });
 
-    await Otp.deleteMany({ phone });
-
-    await Otp.create({
-      phone,
-      otp,
-      expiresAt: new Date(
-        Date.now() + 5 * 60 * 1000
-      )
-    });
-
-    console.log(`OTP for ${phone}: ${otp}`);
+    console.log(`Twilio Verify started for ${phone} — status: ${verification.status}`);
 
     res.json({
       success: true,
@@ -689,6 +215,8 @@ const sendOtp = async (req, res) => {
 
   } catch (error) {
 
+    console.error("SEND OTP ERROR:", error.message);
+
     res.status(500).json({
       success: false,
       message: error.message
@@ -698,48 +226,45 @@ const sendOtp = async (req, res) => {
 
 };
 
-// VERIFY OTP (FOR SIGNUP)
+// VERIFY OTP (FOR SIGNUP) — checks the code via Twilio Verify
 const verifyOtp = async (req, res) => {
 
   try {
 
-    const {
-      phone,
-      otp
-    } = req.body;
+    const { phone, otp } = req.body;
 
-    const otpData = await Otp.findOne({
-      phone
+    if (!phone || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone and OTP are required"
+      });
+    }
+
+    const check = await twilioClient.verify.v2
+      .services(VERIFY_SID)
+      .verificationChecks
+      .create({
+        to: phone,
+        code: otp
+      });
+
+    console.log(`Twilio Verify check for ${phone} — status: ${check.status}`);
+
+    if (check.status !== "approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired OTP"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "OTP verified"
     });
 
-    if (!otpData) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP not found"
-      });
-    }
-
-    if (new Date() > otpData.expiresAt) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP expired"
-      });
-    }
-
-    if (otpData.otp !== otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP"
-      });
-    }
-await Otp.deleteMany({ phone });
-
-res.json({
-  success: true,
-  message: "OTP verified"
-});
-
   } catch (error) {
+
+    console.error("VERIFY OTP ERROR:", error.message);
 
     res.status(500).json({
       success: false,
@@ -750,42 +275,39 @@ res.json({
 
 };
 
-// LOGIN WITH OTP
+// LOGIN WITH OTP — verifies code via Twilio, then logs the user in
 const loginWithOtp = async (req, res) => {
 
   try {
 
-    const {
-      phone,
-      otp,
-      role
-    } = req.body;
+    const { phone, otp, role } = req.body;
 
-    const otpData = await Otp.findOne({
-      phone
-    });
-
-    if (!otpData) {
+    if (!phone || !otp) {
       return res.status(400).json({
         success: false,
-        message: "OTP not found"
+        message: "Phone and OTP are required"
       });
     }
 
-    if (new Date() > otpData.expiresAt) {
+    // 1. Check OTP with Twilio Verify
+    const check = await twilioClient.verify.v2
+      .services(VERIFY_SID)
+      .verificationChecks
+      .create({
+        to: phone,
+        code: otp
+      });
+
+    console.log(`Twilio login check for ${phone} — status: ${check.status}`);
+
+    if (check.status !== "approved") {
       return res.status(400).json({
         success: false,
-        message: "OTP expired"
+        message: "Invalid or expired OTP"
       });
     }
 
-    if (otpData.otp !== otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid OTP"
-      });
-    }
-
+    // 2. Find the user by phone
     const user = await User.findOne({
       phone,
       ...(role ? { role } : {})
@@ -794,19 +316,16 @@ const loginWithOtp = async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found"
+        message: "No account found for this phone number. Please sign up first."
       });
     }
 
+    // 3. Issue JWT
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-
-    await Otp.deleteMany({
-      phone
-    });
 
     res.json({
       success: true,
@@ -816,6 +335,8 @@ const loginWithOtp = async (req, res) => {
     });
 
   } catch (error) {
+
+    console.error("LOGIN WITH OTP ERROR:", error.message);
 
     res.status(500).json({
       success: false,

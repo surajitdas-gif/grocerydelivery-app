@@ -1,57 +1,28 @@
-const express =
-require("express");
+const express = require("express");
+const router = express.Router();
 
-const router =
-express.Router();
+const { protect, admin } = require("../middleware/authMiddleware");
 
 const {
+  placeOrder,
+  getAllOrders,
+  updateStatus,
+  updateLocation,
+  trackOrder,
+  getMyOrders,
+  updatePayment
+} = require("../controllers/orderController");
 
-placeOrder,
-getAllOrders,
-updateStatus,
-updateLocation,
-trackOrder,
-getMyOrders,
-updatePayment
+router.post("/place-order", protect, placeOrder);
 
-}=require(
-"../controllers/orderController"
-);
+// Admin / Delivery routes
+router.get("/all-orders", protect, admin, getAllOrders);
+router.put("/status/:id", protect, admin, updateStatus);
+router.put("/update-location/:id", protect, admin, updateLocation);
 
-router.post(
-"/place-order",
-placeOrder
-);
+// User/General protected routes
+router.get("/track/:id", protect, trackOrder);
+router.get("/my-orders/:userId", protect, getMyOrders);
+router.put("/payment/:id", protect, updatePayment);
 
-router.get(
-"/all-orders",
-getAllOrders
-);
-
-router.put(
-"/status/:id",
-updateStatus
-);
-
-router.put(
-"/update-location/:id",
-updateLocation
-);
-
-router.get(
-"/track/:id",
-trackOrder
-);
-
-router.get(
-"/my-orders/:userId",
-getMyOrders
-);
-
-router.put(
-"/payment/:id",
-updatePayment
-);
-
-module.exports =
-router;
+module.exports = router;

@@ -16,8 +16,7 @@ import ProductCard from '../components/ProductCard';
 import { socket } from "@/socket";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-
-
+import { secureFetch } from '../../src/utils/api';
 // ─── Constants & Theme ────────────────────────────────────────────────────────
 
 const BASE_URL = 'https://grocerydelivery-backend.onrender.com/api';
@@ -160,7 +159,7 @@ export default function HomeScreen() {
       const user = JSON.parse(
         (await AsyncStorage.getItem('user')) || '{}'
       );
-      const res = await fetch(`${BASE_URL}/orders/my-orders/${user._id}`);
+      const res = await secureFetch(`${BASE_URL}/orders/my-orders/${user._id}`);
       const data = await res.json();
 
       if (data?.success && Array.isArray(data.orders) && data.orders.length > 0) {
@@ -184,9 +183,9 @@ export default function HomeScreen() {
 
     try {
 
-     const res = await fetch(
-`${BASE_URL}/products/all-products`
-);
+      const res = await secureFetch(
+        `${BASE_URL}/products/all-products`
+      );
       const data = await res.json();
 
       console.log(
@@ -216,7 +215,7 @@ export default function HomeScreen() {
     setSearch(text);
     if (text.length === 0) { loadProducts(); return; }
     try {
-      const res = await fetch(`${BASE_URL}/products/search/${text}`);
+      const res = await secureFetch(`${BASE_URL}/products/search/${text}`);
       const data = await res.json();
       if (Array.isArray(data)) setProducts(data);
     } catch (error) {

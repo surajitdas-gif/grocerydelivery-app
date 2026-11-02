@@ -11,7 +11,6 @@ const placeOrder = async (req, res) => {
   try {
 
     const {
-      userId,
       items,
       total,
       address,
@@ -22,17 +21,21 @@ const placeOrder = async (req, res) => {
       customerAltPhone
     } = req.body;
 
-    if (!userId || !total) {
+    const finalUserId = req.body.userId || req.user._id.toString();
 
+    if (!total) {
       return res.status(400).json({
-        message: "Missing required fields"
+        message: "Missing required fields: total"
       });
+    }
 
+    if (req.user.role !== "admin" && req.user._id.toString() !== finalUserId.toString()) {
+      return res.status(403).json({ message: "Not authorized to place order for this user" });
     }
 
     const newOrder = new Order({
 
-      userId,
+      userId: finalUserId,
 
       items: items || [],
 
@@ -78,7 +81,8 @@ const placeOrder = async (req, res) => {
 
     if (io) {
 
-      io.emit(
+      // Send to specific user
+      io.to(newOrder.userId).emit(
         "newOrder",
         newOrder
       );
@@ -195,7 +199,7 @@ const updateStatus =
 
         if (io) {
 
-          io.emit(
+          io.to(updatedOrder.userId).emit(
             "orderUpdated",
             updatedOrder
           );
@@ -264,7 +268,7 @@ const updateStatus =
 
       if (io) {
 
-        io.emit(
+        io.to(updatedOrder.userId).emit(
           "orderUpdated",
           updatedOrder
         );
@@ -339,17 +343,19 @@ const updateLocation =
 
       if (io) {
 
-        io.emit(
-          "locationUpdated",
-          {
-            orderId: req.params.id,
-
-            location: {
-              lat,
-              lng
+        const order = await Order.findById(req.params.id);
+        if (order) {
+          io.to(order.userId).emit(
+            "locationUpdated",
+            {
+              orderId: req.params.id,
+              location: {
+                lat,
+                lng
+              }
             }
-          }
-        );
+          );
+        }
 
       }
 
@@ -394,6 +400,10 @@ const trackOrder =
 
       }
 
+      if (req.user.role !== "admin" && req.user._id.toString() !== order.userId.toString()) {
+        return res.status(403).json({ message: "Not authorized to track this order" });
+      }
+
       res.json({
 
         deliveryLocation:
@@ -429,6 +439,10 @@ const getMyOrders =
   async (req, res) => {
 
     try {
+
+      if (req.user.role !== "admin" && req.user._id.toString() !== req.params.userId) {
+        return res.status(403).json({ message: "Not authorized to view these orders" });
+      }
 
       const orders =
         await Order.find({
@@ -490,21 +504,18 @@ const updatePayment =
 
     try {
 
-      const order =
-        await Order.findByIdAndUpdate(
+      const order = await Order.findById(req.params.id);
 
-          req.params.id,
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
 
-          {
-            paymentReceived:
-              req.body.paymentReceived
-          },
+      if (req.user.role !== "admin" && req.user._id.toString() !== order.userId.toString()) {
+        return res.status(403).json({ message: "Not authorized to update payment for this order" });
+      }
 
-          {
-            new: true
-          }
-
-        );
+      order.paymentReceived = req.body.paymentReceived;
+      await order.save();
 
       res.json({
 

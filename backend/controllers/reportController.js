@@ -8,7 +8,6 @@ async(req,res)=>{
 try{
 
 const {
-userId,
 userName,
 issue
 }=req.body;
@@ -16,7 +15,7 @@ issue
 const newReport =
 new Report({
 
-userId,
+userId: req.user._id,
 userName,
 issue
 

@@ -1,27 +1,13 @@
-const express =
-require("express");
-
-const router =
-express.Router();
+const express = require("express");
+const router = express.Router();
+const { protect } = require("../middleware/authMiddleware");
 
 const {
+  getUserAddress,
+  saveAddress
+} = require("../controllers/addressController");
 
-getUserAddress,
-saveAddress
+router.get("/:userId", protect, getUserAddress);
+router.post("/save", protect, saveAddress);
 
-} = require(
-"../controllers/addressController"
-);
-
-router.get(
-"/:userId",
-getUserAddress
-);
-
-router.post(
-"/save",
-saveAddress
-);
-
-module.exports =
-router;
+module.exports = router;

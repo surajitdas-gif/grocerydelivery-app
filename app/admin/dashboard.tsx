@@ -17,6 +17,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
+import { secureFetch } from '../../src/utils/api';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 
@@ -187,7 +188,7 @@ export default function AdminDashboard() {
 
   const loadProducts = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/api/products/all-products`);
+      const res = await secureFetch(`${BASE_URL}/api/products/all-products`);
       const data = await res.json();
       setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -216,7 +217,7 @@ export default function AdminDashboard() {
         name: 'product.jpg',
       } as any);
 
-      const response = await fetch(`${BASE_URL}/api/upload`, {
+      const response = await secureFetch(`${BASE_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -246,7 +247,7 @@ export default function AdminDashboard() {
         ? `${BASE_URL}/api/products/update-product/${editId}`
         : `${BASE_URL}/api/products/add-product`;
 
-      await fetch(url, {
+      await secureFetch(url, {
         method: editId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -270,7 +271,7 @@ export default function AdminDashboard() {
 
   const deleteProduct = async (id: string) => {
     try {
-      await fetch(`${BASE_URL}/api/products/delete-product/${id}`, {
+      await secureFetch(`${BASE_URL}/api/products/delete-product/${id}`, {
         method: 'DELETE',
       });
       loadProducts();

@@ -1,27 +1,13 @@
-const express =
-require("express");
-
-const router =
-express.Router();
-
-const upload =
-require(
-"../middleware/uploadMiddleware"
-);
+const express = require("express");
+const router = express.Router();
+const { protect, admin } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
 const {
-uploadImage
-} = require(
-"../controllers/uploadController"
-);
+  uploadImage
+} = require("../controllers/uploadController");
 
-router.post(
-"/",
-upload.single(
-"image"
-),
-uploadImage
-);
+// Only admins should upload product images
+router.post("/", protect, admin, upload.single("image"), uploadImage);
 
-module.exports =
-router;
+module.exports = router;

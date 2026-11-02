@@ -1,29 +1,13 @@
-const express =
-require("express");
-
-const router =
-express.Router();
+const express = require("express");
+const router = express.Router();
+const { protect, admin } = require("../middleware/authMiddleware");
 
 const {
+  createReport,
+  getAllReports
+} = require("../controllers/reportController");
 
-createReport,
-getAllReports
+router.post("/create", protect, createReport);
+router.get("/all", protect, admin, getAllReports);
 
-}
-=
-require(
-"../controllers/reportController"
-);
-
-router.post(
-"/create",
-createReport
-);
-
-router.get(
-"/all",
-getAllReports
-);
-
-module.exports =
-router;
+module.exports = router;
