@@ -7,9 +7,7 @@ const connectDB = async () => {
     const conn = await mongoose.connect(
       process.env.MONGODB_URI,
       {
-        family: 4, // Force IPv4
-        serverSelectionTimeoutMS: 5000,
-        // Options below help with reconnection in production
+        serverSelectionTimeoutMS: 15000,
         socketTimeoutMS: 45000, 
       }
     );
